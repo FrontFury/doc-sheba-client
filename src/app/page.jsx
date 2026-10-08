@@ -1,3 +1,4 @@
+import SymptomSelector from "@/components/Home/Body/SymptomSelector";
 import ExploreDept from "@/components/Home/ExploreDept";
 import HeroBanner from "@/components/Home/HeroBanner";
 import PatientVoice from "@/components/Home/PatientVoice";
@@ -12,6 +13,7 @@ export default function Home() {
       <SpecialDoc/>
       <PatientVoice/>
       <ShortDes/>
+      <SymptomSelector/>
     </main>
   );
 }
