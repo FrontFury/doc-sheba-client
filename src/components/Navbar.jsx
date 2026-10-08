@@ -54,12 +54,12 @@ export default function Navbar() {
 
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/logo.png"
+              src="/Nav.png"
               alt="DocSheba Logo"
               width={160}
               height={40}
               priority
-              className="h-10 w-auto object-contain"
+              className="h-12 md:h-24 w-auto object-contain"
             />
           </Link>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -16,6 +16,11 @@ import { Button } from "@heroui/react";
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [currentYear, setCurrentYear] = useState(2026);
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -68,7 +73,7 @@ export default function Footer() {
           <div className="lg:col-span-4 flex flex-col gap-4">
             <Link href="/" className="inline-block">
               <Image
-                src="/logo.png"
+                src="/DocSheba Healthcare Logo.png"
                 alt="DocSheba Logo"
                 width={160}
                 height={40}
@@ -190,7 +195,7 @@ export default function Footer() {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#64748B] dark:text-slate-400">
           <p>
-            © {new Date().getFullYear()} DocSheba Healthcare Technologies. Clinical precision with empathetic care. All rights reserved.
+            © {currentYear} DocSheba Healthcare Technologies. Clinical precision with empathetic care. All rights reserved.
           </p>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
