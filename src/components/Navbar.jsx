@@ -49,7 +49,11 @@ export default function Navbar() {
             className="sm:hidden p-2 rounded-lg text-[#12343B] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             aria-label="Toggle menu"
           >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
 
           <Link href="/" className="flex items-center gap-2">
@@ -86,14 +90,12 @@ export default function Navbar() {
 
         {/* Right: Actions & Theme Toggle */}
         <div className="flex items-center gap-2 sm:gap-4">
-          <Button
-            as={Link}
-            href="/login"
-            variant="light"
-            className="hidden sm:inline-flex font-medium text-[#0F766E] dark:text-teal-400 hover:bg-[#E8F7F4] dark:hover:bg-slate-800 text-sm px-4"
+          <Link
+            href="/auth/signin"
+            className="hidden sm:inline-flex items-center justify-center rounded-md font-medium text-[#0F766E] dark:text-teal-400 hover:bg-[#E8F7F4] dark:hover:bg-slate-800 text-sm px-4 py-2 transition-colors"
           >
             Log In
-          </Button>
+          </Link>
 
           <Button
             as={Link}
@@ -139,14 +141,13 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="pt-2">
-            <Button
-              as={Link}
-              href="/login"
-              className="w-full bg-[#E8F7F4] dark:bg-slate-800 text-[#0F766E] dark:text-teal-400 font-semibold text-base"
+            <Link
+              href="/auth/signin"
+              className="flex w-full items-center justify-center rounded-md bg-[#E8F7F4] dark:bg-slate-800 text-[#0F766E] dark:text-teal-400 font-semibold text-base px-4 py-2"
               onClick={() => setIsMenuOpen(false)}
             >
               Log In
-            </Button>
+            </Link>
           </div>
         </div>
       )}
