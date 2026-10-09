@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/auth-client";
+import { motion, AnimatePresence } from "motion/react";
 import {
   User,
   Mail,
@@ -14,6 +15,8 @@ import {
   ShieldCheck,
   Sparkles,
   CheckCircle2,
+  Stethoscope,
+  HeartPulse,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -23,12 +26,17 @@ export default function SignUpPage() {
     name: "",
     email: "",
     password: "",
+    role: "patient", // 'patient' or 'doctor'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleRoleSelect = (selectedRole) => {
+    setFormData({ ...formData, role: selectedRole });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,6 +48,7 @@ export default function SignUpPage() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        role: formData.role, // Pass role to Better Auth
         callbackURL: "/",
       });
 
@@ -133,7 +142,6 @@ export default function SignUpPage() {
         </div>
 
         <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800/80 pt-6">
-          <span>v2.5 Next.js App Router</span>
           <span>© DocSheba Health</span>
         </div>
       </div>
@@ -167,6 +175,84 @@ export default function SignUpPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* ROLE SELECTION CARDS */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                I am registering as a
+              </label>
+              <div className="grid grid-cols-2 gap-3 relative">
+                
+                {/* Patient Role Button */}
+                <button
+                  type="button"
+                  onClick={() => handleRoleSelect("patient")}
+                  className={`relative p-3.5 rounded-2xl border text-left font-bold text-xs transition-all flex items-center gap-3 z-10 ${
+                    formData.role === "patient"
+                      ? "text-[#0F766E] dark:text-teal-300"
+                      : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 text-slate-600 dark:text-slate-400"
+                  }`}
+                >
+                  {formData.role === "patient" && (
+                    <motion.div
+                      layoutId="activeAuthRole"
+                      className="absolute inset-0 bg-teal-50 dark:bg-teal-950/60 border-2 border-[#0F766E] dark:border-teal-500 rounded-2xl -z-10 shadow-sm"
+                      transition={{ type: "spring", stiffness: 350, damping: 26 }}
+                    />
+                  )}
+                  <div className={`p-2 rounded-xl ${formData.role === "patient" ? "bg-[#0F766E] text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-500"}`}>
+                    <HeartPulse className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-sm">Patient</p>
+                    <p className="text-[10px] opacity-75 font-normal">Seek care & appointments</p>
+                  </div>
+                </button>
+
+                {/* Doctor Role Button */}
+                <button
+                  type="button"
+                  onClick={() => handleRoleSelect("doctor")}
+                  className={`relative p-3.5 rounded-2xl border text-left font-bold text-xs transition-all flex items-center gap-3 z-10 ${
+                    formData.role === "doctor"
+                      ? "text-[#0F766E] dark:text-teal-300"
+                      : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 text-slate-600 dark:text-slate-400"
+                  }`}
+                >
+                  {formData.role === "doctor" && (
+                    <motion.div
+                      layoutId="activeAuthRole"
+                      className="absolute inset-0 bg-teal-50 dark:bg-teal-950/60 border-2 border-[#0F766E] dark:border-teal-500 rounded-2xl -z-10 shadow-sm"
+                      transition={{ type: "spring", stiffness: 350, damping: 26 }}
+                    />
+                  )}
+                  <div className={`p-2 rounded-xl ${formData.role === "doctor" ? "bg-[#0F766E] text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-500"}`}>
+                    <Stethoscope className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-sm">Doctor</p>
+                    <p className="text-[10px] opacity-75 font-normal">Provide clinical care</p>
+                  </div>
+                </button>
+
+              </div>
+            </div>
+
+            {/* Doctor Verification Note */}
+            <AnimatePresence>
+              {formData.role === "doctor" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl text-amber-700 dark:text-amber-400 text-[11px] font-medium flex items-center gap-2"
+                >
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>Doctors require BMDC verification after initial registration.</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div>
               <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                 Full Name
@@ -179,7 +265,7 @@ export default function SignUpPage() {
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Dr. Alexander Vance"
+                  placeholder={formData.role === "doctor" ? "Dr. Alexander Vance" : "Alexander Vance"}
                   className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-[#0F766E] dark:focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all shadow-inner"
                 />
               </div>
@@ -247,7 +333,7 @@ export default function SignUpPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  <span>Create Account</span>
+                  <span>Create {formData.role === "doctor" ? "Doctor" : "Patient"} Account</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
