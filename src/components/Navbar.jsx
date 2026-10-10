@@ -179,7 +179,7 @@ export default function Navbar() {
                   {/* Menu Options */}
                   <div className="p-1 space-y-1">
                     <Link
-                      href="/dashboard"
+                      href="/dashboard/patient"
                       onClick={() => setIsDropdownOpen(false)}
                       className="flex items-center gap-3 px-3 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                     >
