@@ -3,8 +3,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "@heroui/react";
-import { Calendar, Sun, Moon, Menu, X, User as UserIcon, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
+import {
+  Calendar,
+  Sun,
+  Moon,
+  Menu,
+  X,
+  User as UserIcon,
+  LogOut,
+  LayoutDashboard,
+  ChevronDown,
+} from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
 
 export default function Navbar() {
@@ -13,6 +24,7 @@ export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  const pathname = usePathname();
   const { data: session } = useSession();
   const user = session?.user;
   const dropdownRef = useRef(null);
@@ -54,7 +66,7 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { name: "Home", href: "/", active: true },
+    { name: "Home", href: "/" },
     { name: "Find Doctors", href: "/doctors" },
     { name: "Departments", href: "/departments" },
     { name: "About Us", href: "/about" },
@@ -92,29 +104,35 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Center: Navigation Links */}
+        {/* Center: Dynamic Active Navigation Links */}
         <nav className="hidden sm:flex items-center gap-8 lg:gap-10">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className={`text-sm lg:text-base font-medium transition-colors duration-200 relative py-1 ${
-                link.active
-                  ? "text-[#0F766E] dark:text-teal-400 font-semibold"
-                  : "text-[#172033] dark:text-slate-200 hover:text-[#0F766E] dark:hover:text-teal-400"
-              }`}
-            >
-              {link.name}
-              {link.active && (
-                <span className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[#0F766E] dark:bg-teal-400 rounded-full" />
-              )}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(link.href);
+
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`text-sm lg:text-base transition-colors duration-200 relative py-1 ${
+                  isActive
+                    ? "text-[#0F766E] dark:text-teal-400 font-bold"
+                    : "text-[#172033] dark:text-slate-200 hover:text-[#0F766E] dark:hover:text-teal-400 font-medium"
+                }`}
+              >
+                {link.name}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[#0F766E] dark:bg-teal-400 rounded-full" />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right: Actions, Theme Toggle & User Menu */}
         <div className="flex items-center gap-2 sm:gap-4">
-          
           {/* Appointment Button */}
           <Button
             as={Link}
@@ -134,7 +152,11 @@ export default function Navbar() {
             aria-label="Toggle theme"
             className="bg-slate-100 dark:bg-slate-800 text-[#12343B] dark:text-amber-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
-            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5 text-[#12343B]" />}
+            {isDarkMode ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5 text-[#12343B]" />
+            )}
           </Button>
 
           {/* User Profile Dropdown or Login Button */}
@@ -145,7 +167,7 @@ export default function Navbar() {
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
                 className="flex items-center gap-2 p-1.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
               >
-                {/* User Avatar image or Default Avatar Icon */}
+                {/* User Avatar */}
                 <div className="w-9 h-9 rounded-xl overflow-hidden bg-[#0F766E]/10 dark:bg-teal-500/20 border border-[#0F766E]/20 dark:border-teal-400/30 flex items-center justify-center shrink-0">
                   {user.image ? (
                     <Image
@@ -159,14 +181,16 @@ export default function Navbar() {
                     <UserIcon className="w-5 h-5 text-[#0F766E] dark:text-teal-400" />
                   )}
                 </div>
-                <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 hidden sm:block ${isDropdownOpen ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-slate-500 transition-transform duration-200 hidden sm:block ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
               </button>
 
               {/* Profile Dropdown Menu */}
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xl py-2 z-50 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
-                  
-                  {/* User Profile Info Header */}
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
                     <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
                       {user.name || "User Account"}
@@ -176,7 +200,6 @@ export default function Navbar() {
                     </p>
                   </div>
 
-                  {/* Menu Options */}
                   <div className="p-1 space-y-1">
                     <Link
                       href="/dashboard/patient"
@@ -213,20 +236,30 @@ export default function Navbar() {
       {/* Mobile Drawer Menu */}
       {isMenuOpen && (
         <div className="sm:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pt-2 pb-6 flex flex-col gap-3 shadow-lg">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              onClick={() => setIsMenuOpen(false)}
-              className={`text-base font-medium py-2 border-b border-slate-100 dark:border-slate-800/50 ${
-                link.active
-                  ? "text-[#0F766E] dark:text-teal-400 font-semibold"
-                  : "text-[#12343B] dark:text-slate-200 hover:text-[#0F766E]"
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(link.href);
+
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                className={`text-base font-medium py-2 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between ${
+                  isActive
+                    ? "text-[#0F766E] dark:text-teal-400 font-bold"
+                    : "text-[#12343B] dark:text-slate-200 hover:text-[#0F766E]"
+                }`}
+              >
+                <span>{link.name}</span>
+                {isActive && (
+                  <span className="w-2 h-2 rounded-full bg-[#0F766E] dark:bg-teal-400" />
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
     </header>
