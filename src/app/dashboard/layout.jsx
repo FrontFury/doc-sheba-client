@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }) {
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Find Doctor", href: "/dashboard/find-doctor", icon: UserSearch },
+    { name: "Doctor Profile", href: "/dashboard/doctor-profile", icon: UserSearch },
     { name: "MyAppointments", href: "/dashboard/appointments", icon: CalendarCheck },
     { name: "Medical Records", href: "/dashboard/records", icon: FileText },
     { name: "Prescriptions", href: "/dashboard/prescriptions", icon: Pill },
