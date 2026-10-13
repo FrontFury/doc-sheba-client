@@ -1,9 +1,15 @@
 "use server";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+const parseResponse = async (res) => {
+  const body = await res.text();
+  return body.trim() ? JSON.parse(body) : null;
+};
+
 export const serverFetch = async (path) => {
   const res = await fetch(`${baseUrl}${path}`);
-  return res.json();
+  return parseResponse(res);
 };
 
 export const serverMutation = async (path, data) => {
@@ -15,5 +21,5 @@ export const serverMutation = async (path, data) => {
     body: JSON.stringify(data),
   });
 
-  return res.json();
+  return parseResponse(res);
 };
