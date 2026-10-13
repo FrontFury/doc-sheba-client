@@ -43,6 +43,7 @@ export default function DoctorProfile({ doctor, doctorDetails }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (e) => {
@@ -80,6 +81,7 @@ export default function DoctorProfile({ doctor, doctorDetails }) {
 
         if (result.success && result.data?.url) {
           console.log("ImgBB Permanent URL:", result.data.url);
+          setImageLoadFailed(false);
           setFormData((prev) => ({ ...prev, image: result.data.url }));
         } else {
           console.error("ImgBB Upload Failed:", result);
@@ -118,7 +120,9 @@ export default function DoctorProfile({ doctor, doctorDetails }) {
       }
     } catch (error) {
       console.error("Create Doctor Error:", error);
-      setErrorMessage("Backend server issue. Please check your endpoint.");
+      setErrorMessage(
+        "Cannot connect to the DocSheba API. Start the backend server and try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -180,16 +184,18 @@ export default function DoctorProfile({ doctor, doctorDetails }) {
                 </label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-dashed border-[#0F766E]/40 bg-slate-200 dark:bg-slate-700 shrink-0 shadow-sm flex items-center justify-center text-slate-400">
-                    {formData.image ? (
+                    {formData.image && !imageLoadFailed ? (
                       <Image
                         src={formData.image}
                         alt="Profile"
                         fill
                         className="object-cover"
+                        unoptimized
+                        onError={() => setImageLoadFailed(true)}
                       />
                     ) : (
-                      <span className="text-[10px] font-bold text-slate-400">
-                        No Image
+                      <span className="px-2 text-center text-[10px] font-bold text-slate-400">
+                        Image unavailable. Upload a new photo.
                       </span>
                     )}
                   </div>
@@ -453,16 +459,18 @@ export default function DoctorProfile({ doctor, doctorDetails }) {
             <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200/90 dark:border-slate-800 p-6 shadow-xl space-y-5">
               <div className="flex items-start gap-4">
                 <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 shadow-md flex items-center justify-center">
-                  {formData.image ? (
+                  {formData.image && !imageLoadFailed ? (
                     <Image
                       src={formData.image}
                       alt="Doctor"
                       fill
                       className="object-cover"
+                      unoptimized
+                      onError={() => setImageLoadFailed(true)}
                     />
                   ) : (
-                    <span className="text-[10px] font-bold text-slate-400">
-                      Photo
+                    <span className="px-2 text-center text-[10px] font-bold text-slate-400">
+                      Image unavailable
                     </span>
                   )}
                 </div>

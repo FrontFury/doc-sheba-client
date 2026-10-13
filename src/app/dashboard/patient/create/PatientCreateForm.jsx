@@ -21,7 +21,6 @@ const labelClassName = "block text-xs font-extrabold text-slate-500 mb-1";
 
 export default function PatientCreateForm({ user, patientDetails }) {
   const [formData, setFormData] = useState({
-    patientID: user?.id || patientDetails?.patientID || "",
     name: patientDetails?.name || user?.name || "",
     email: patientDetails?.email || user?.email || "",
     phone: patientDetails?.phone || "",
@@ -39,6 +38,7 @@ export default function PatientCreateForm({ user, patientDetails }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [createdPatientID, setCreatedPatientID] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (event) => {
@@ -103,6 +103,7 @@ export default function PatientCreateForm({ user, patientDetails }) {
       if (result?.error) {
         setErrorMessage(result?.error || "Failed to create patient profile.");
       } else {
+        setCreatedPatientID(result.patientID);
         setSavedSuccess(true);
       }
     } catch (error) {
@@ -141,7 +142,9 @@ export default function PatientCreateForm({ user, patientDetails }) {
               className="p-4 bg-linear-to-r from-[#0F766E] to-emerald-600 text-white rounded-2xl font-bold text-xs flex items-center gap-2 shadow-lg"
             >
               <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-              <span>Patient profile created successfully.</span>
+              <span>
+                Patient profile created successfully. Patient ID: {createdPatientID}
+              </span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -162,7 +165,7 @@ export default function PatientCreateForm({ user, patientDetails }) {
                   <span>A patient profile already exists for this account. Creation is disabled.</span>
                 </div>
               )}
-              <fieldset disabled={Boolean(patientDetails)} className="space-y-6 border-0 p-0 m-0 min-w-0">
+              <fieldset disabled={Boolean(patientDetails) || savedSuccess} className="space-y-6 border-0 p-0 m-0 min-w-0">
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-wider">
                   Profile Photo (ImgBB Cloud Storage)
@@ -257,11 +260,11 @@ export default function PatientCreateForm({ user, patientDetails }) {
 
               <Button
                 type="submit"
-                disabled={isSubmitting || isUploading}
+                disabled={isSubmitting || isUploading || savedSuccess}
                 startContent={isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 className="w-full bg-[#0F766E] hover:bg-[#0E7490] text-white font-black text-xs py-3.5 rounded-2xl shadow-lg transition-all"
               >
-                  {isSubmitting ? "Saving Patient..." : patientDetails ? "Patient Profile Exists" : "Create Patient Profile"}
+                  {isSubmitting ? "Saving Patient..." : patientDetails || savedSuccess ? "Patient Profile Exists" : "Create Patient Profile"}
               </Button>
               </fieldset>
             </form>

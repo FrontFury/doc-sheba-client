@@ -1,9 +1,48 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowRight, Heart, Brain, Bone, Baby, Sparkles, Stethoscope } from "lucide-react";
+import {
+  ArrowRight,
+  Heart,
+  Brain,
+  Bone,
+  Baby,
+  Sparkles,
+  Stethoscope,
+  Loader2,
+} from "lucide-react";
+
+const getDoctorList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.doctors)) return payload.doctors;
+  if (Array.isArray(payload?.data?.doctors)) return payload.data.doctors;
+  throw new Error("The doctors API returned an invalid response.");
+};
+
+const getDepartmentIcon = (department) => {
+  const name = department.toLowerCase();
+
+  if (name.includes("cardio") || name.includes("heart")) {
+    return { icon: Heart, iconColor: "text-rose-500" };
+  }
+  if (name.includes("neuro") || name.includes("brain")) {
+    return { icon: Brain, iconColor: "text-pink-500" };
+  }
+  if (name.includes("ortho") || name.includes("bone") || name.includes("joint")) {
+    return { icon: Bone, iconColor: "text-amber-500" };
+  }
+  if (name.includes("pediatr") || name.includes("child")) {
+    return { icon: Baby, iconColor: "text-amber-600" };
+  }
+  if (name.includes("dermat") || name.includes("skin")) {
+    return { icon: Sparkles, iconColor: "text-amber-500" };
+  }
+
+  return { icon: Stethoscope, iconColor: "text-purple-600" };
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,14 +65,59 @@ const itemVariants = {
 };
 
 export default function ExploreDept() {
-  const departments = [
-    { id: "cardiology", name: "Cardiology", doctorsCount: "24 Doctors", icon: Heart, iconColor: "text-rose-500", href: "/departments/cardiology" },
-    { id: "neurology", name: "Neurology", doctorsCount: "18 Doctors", icon: Brain, iconColor: "text-pink-500", href: "/departments/neurology" },
-    { id: "orthopedics", name: "Orthopedics", doctorsCount: "15 Doctors", icon: Bone, iconColor: "text-amber-500", href: "/departments/orthopedics" },
-    { id: "pediatrics", name: "Pediatrics", doctorsCount: "21 Doctors", icon: Baby, iconColor: "text-amber-600", href: "/departments/pediatrics" },
-    { id: "dermatology", name: "Dermatology", doctorsCount: "12 Doctors", icon: Sparkles, iconColor: "text-amber-500", href: "/departments/dermatology" },
-    { id: "internal-med", name: "Internal Med", doctorsCount: "30 Doctors", icon: Stethoscope, iconColor: "text-purple-600", href: "/departments/internal-medicine" },
-  ];
+  const [doctors, setDoctors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+    const fetchDoctors = async () => {
+      try {
+        if (!baseUrl) {
+          throw new Error("NEXT_PUBLIC_BASE_URL is not configured.");
+        }
+
+        const response = await fetch(
+          `${baseUrl.replace(/\/$/, "")}/api/doctors`,
+          { signal: controller.signal }
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to load doctors (${response.status}).`);
+        }
+
+        const doctorList = getDoctorList(await response.json());
+        setDoctors(doctorList.filter((doctor) => doctor && typeof doctor === "object"));
+      } catch (fetchError) {
+        if (fetchError.name !== "AbortError") {
+          console.error("Failed to fetch departments:", fetchError);
+          setError("Unable to load departments right now.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+
+    fetchDoctors();
+    return () => controller.abort();
+  }, []);
+
+  const departments = [...new Map(
+    doctors
+      .map((doctor) => doctor.department)
+      .filter((department) => typeof department === "string" && department.trim())
+      .map((department) => [department.trim().toLowerCase(), department.trim()])
+  ).values()].map((name) => ({
+    id: name.toLowerCase(),
+    name,
+    doctorsCount: `${doctors.filter(
+      (doctor) =>
+        typeof doctor.department === "string" &&
+        doctor.department.trim().toLowerCase() === name.toLowerCase()
+    ).length} Doctors`,
+    ...getDepartmentIcon(name),
+  }));
 
   return (
     <section className="py-12 lg:py-16 bg-[#F8FAFC] dark:bg-slate-950 transition-colors overflow-hidden">
@@ -63,55 +147,73 @@ export default function ExploreDept() {
               href="/departments"
               className="inline-flex items-center gap-2 text-sm sm:text-base font-semibold text-[#0F766E] dark:text-teal-400 hover:text-[#0E7490] dark:hover:text-teal-300 transition-colors shrink-0 group"
             >
-              <span>View all 28 Departments</span>
+              <span>View all Departments</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>
         </motion.div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6"
-        >
-          {departments.map((dept) => {
-            const IconComponent = dept.icon;
-            return (
-              <motion.div
-                key={dept.id}
-                variants={itemVariants}
-                whileHover={{ y: -8, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              >
-                <Link
-                  href={dept.href}
-                  className="group flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl hover:shadow-teal-900/5 hover:border-teal-400/80 dark:hover:border-teal-500/60 transition-all duration-300 text-center h-full relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-b from-teal-500/0 via-teal-500/0 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 py-12 text-sm font-medium text-slate-500 dark:text-slate-400">
+            <Loader2 className="h-5 w-5 animate-spin text-[#0F766E]" />
+            Loading departments…
+          </div>
+        ) : error ? (
+          <p role="alert" className="py-12 text-center text-sm font-medium text-rose-600 dark:text-rose-400">
+            {error}
+          </p>
+        ) : departments.length === 0 ? (
+          <p className="py-12 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+            No departments are available yet.
+          </p>
+        ) : (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="-mx-4 snap-x scroll-smooth overflow-x-auto px-4 pb-4 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12 [scrollbar-width:thin] [scrollbar-color:#99c8bd_transparent]"
+          >
+            <div className="flex w-max gap-4 sm:gap-6">
+              {departments.map((dept) => {
+                const IconComponent = dept.icon;
+                return (
                   <motion.div
-                    whileHover={{ rotate: 10, scale: 1.1 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className="w-14 h-14 rounded-full bg-[#E8F7F4] dark:bg-teal-950/60 flex items-center justify-center mb-4 shadow-inner relative z-10"
+                    key={dept.id}
+                    variants={itemVariants}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                    className="w-[172px] snap-start sm:w-[210px]"
                   >
-                    <IconComponent className={`w-6 h-6 ${dept.iconColor}`} />
+                    <Link
+                      href={`/doctors?department=${encodeURIComponent(dept.name)}`}
+                      className="group relative flex h-full min-h-[190px] snap-start flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 text-center shadow-sm transition-all duration-300 hover:border-teal-400/80 hover:shadow-xl hover:shadow-teal-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-500/60"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-b from-teal-500/0 via-teal-500/0 to-teal-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+                      <motion.div
+                        whileHover={{ rotate: 10, scale: 1.1 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                        className="relative z-10 mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E8F7F4] shadow-inner dark:bg-teal-950/60"
+                      >
+                        <IconComponent className={`h-6 w-6 ${dept.iconColor}`} />
+                      </motion.div>
+
+                      <h3 className="relative z-10 line-clamp-2 text-base font-bold text-[#12343B] transition-colors group-hover:text-[#0F766E] dark:text-slate-100 dark:group-hover:text-teal-400">
+                        {dept.name}
+                      </h3>
+
+                      <p className="relative z-10 mt-1 text-xs font-medium text-[#64748B] dark:text-slate-400">
+                        {dept.doctorsCount}
+                      </p>
+                    </Link>
                   </motion.div>
-
-                  <h3 className="font-bold text-base text-[#12343B] dark:text-slate-100 group-hover:text-[#0F766E] dark:group-hover:text-teal-400 transition-colors relative z-10">
-                    {dept.name}
-                  </h3>
-
-                  <p className="text-xs sm:text-sm text-[#64748B] dark:text-slate-400 mt-1 font-medium relative z-10">
-                    {dept.doctorsCount}
-                  </p>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+          )}
 
       </div>
     </section>

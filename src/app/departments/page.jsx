@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -10,125 +10,150 @@ import {
   Brain,
   Baby,
   Bone,
-  Eye,
   Activity,
   ShieldCheck,
   ArrowRight,
   Sparkles,
   Users,
   CheckCircle2,
-  Building2,
-  Syringe,
   Microscope,
   Pill,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 
-// Clinical Departments Dataset
-const DEPARTMENTS_DATA = [
-  {
-    id: 'pulmonology-respiratory',
-    name: 'Pulmonology & Respiratory Care',
-    category: 'Internal Medicine',
-    icon: Activity,
-    doctorCount: 14,
-    description:
-      'Specialized pathways for COPD, asthma, bronchial thermoplasty, post-viral pulmonary fibrosis, and sleep apnea care.',
-    commonTreatments: ['Bronchoscopy', 'Spirometry', 'Nebulization Care', 'Sleep Apnea Study'],
-    popularSpecialist: 'Prof. Dr. Rawshan Jahan',
-  },
-  {
-    id: 'radiation-clinical-oncology',
-    name: 'Radiation & Clinical Oncology',
-    category: 'Oncology',
-    icon: Microscope,
-    doctorCount: 18,
-    description:
-      'Precision radiotherapy, photon beam simulation, targeted chemotherapy, and comprehensive cancer care protocols.',
-    commonTreatments: ['IMRT Radiation', 'Chemotherapy Protocols', 'Tumor Board Review'],
-    popularSpecialist: 'Dr. Biswajit Bhattacharjee',
-  },
-  {
-    id: 'pediatrics-neonatology',
-    name: 'Pediatrics & Neonatology',
-    category: 'Pediatrics',
-    icon: Baby,
-    doctorCount: 12,
-    description:
-      'Dedicated child health unit covering infant nutrition, developmental delays, pediatric neurology, and vaccinations.',
-    commonTreatments: ['Infant Nutrition Sync', 'NICU Consultation', 'Vaccination Schedule'],
-    popularSpecialist: 'Dr. Sabina Sultana',
-  },
-  {
-    id: 'orthopedics-joint-surgery',
-    name: 'Orthopedics & Joint Surgery',
-    category: 'Surgical',
-    icon: Bone,
-    doctorCount: 16,
-    description:
-      'Minimally invasive arthroscopic joint repair, complex pelvic trauma surgery, and rapid post-op mobility rehab.',
-    commonTreatments: ['Joint Replacement', 'Arthroscopy', 'Fracture Management'],
-    popularSpecialist: 'Dr. A.T.M. Zulfiqur Rahman',
-  },
-  {
-    id: 'cardiology-vascular',
-    name: 'Cardiology & Vascular Medicine',
-    category: 'Internal Medicine',
-    icon: Heart,
-    doctorCount: 22,
-    description:
-      'Comprehensive heart health care including angiograms, hypertension management, and preventative cardiac care.',
-    commonTreatments: ['ECG & Echo', 'Angiography', 'Hypertension Profiling'],
-    popularSpecialist: 'Dr. Sarah Ahmed',
-  },
-  {
-    id: 'neurology-neurosurgery',
-    name: 'Neurology & Neurosurgery',
-    category: 'Internal Medicine',
-    icon: Brain,
-    doctorCount: 11,
-    description:
-      'Diagnosis and advanced management of stroke, epilepsy, migraine, neuropathy, and spinal cord disorders.',
-    commonTreatments: ['EEG & EMG', 'Stroke Management', 'Migraine Care'],
-    popularSpecialist: 'Dr. Syed Kabir Hossain',
-  },
-  {
-    id: 'gynecology-obstetrics',
-    name: 'Gynecology & Women’s Health',
-    category: 'Surgical',
-    icon: Users,
-    doctorCount: 15,
-    description:
-      'Hormonal profiling, PCOS management, prenatal care, high-risk pregnancy monitoring, and fertility guidance.',
-    commonTreatments: ['PCOS Management', 'Antenatal Care', 'Infertility Screening'],
-    popularSpecialist: 'Dr. Sayeda Sanjid Ara Nupur',
-  },
-  {
-    id: 'gastroenterology-hepatology',
-    name: 'Gastroenterology & Hepatology',
-    category: 'Internal Medicine',
-    icon: Pill,
-    doctorCount: 10,
-    description:
-      'Screening and treatment for Hepatitis B/C, fatty liver disease, IBS, acid reflux, and endoscopic procedures.',
-    commonTreatments: ['Endoscopy', 'Colonoscopy', 'Liver Function Screening'],
-    popularSpecialist: 'Dr. Iqbal Murshid Kabir',
-  },
-];
+const getDoctorList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.doctors)) return payload.doctors;
+  if (Array.isArray(payload?.data?.doctors)) return payload.data.doctors;
+  throw new Error('The doctors API returned an invalid response.');
+};
 
-const CATEGORIES = ['All', 'Internal Medicine', 'Oncology', 'Surgical', 'Pediatrics'];
+const getDepartmentIcon = (department) => {
+  const name = department.toLowerCase();
+
+  if (name.includes('cardio') || name.includes('heart')) return Heart;
+  if (name.includes('neuro') || name.includes('brain')) return Brain;
+  if (name.includes('pediatr') || name.includes('child')) return Baby;
+  if (name.includes('ortho') || name.includes('bone') || name.includes('joint')) return Bone;
+  if (name.includes('respir') || name.includes('pulmon') || name.includes('lung')) return Activity;
+  if (name.includes('onco') || name.includes('cancer')) return Microscope;
+  if (name.includes('gyne') || name.includes('obstet')) return Users;
+  if (name.includes('gastro') || name.includes('digest') || name.includes('liver')) return Pill;
+  if (name.includes('skin') || name.includes('dermat')) return Sparkles;
+
+  return Stethoscope;
+};
 
 export default function Departments() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [doctors, setDoctors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Filter Logic
-  const filteredDepartments = DEPARTMENTS_DATA.filter((dept) => {
-    const matchesCategory = selectedCategory === 'All' || dept.category === selectedCategory;
-    const matchesSearch =
-      dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dept.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+  useEffect(() => {
+    const controller = new AbortController();
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+    const fetchDoctors = async () => {
+      try {
+        if (!baseUrl) {
+          throw new Error('NEXT_PUBLIC_BASE_URL is not configured.');
+        }
+
+        const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/doctors`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to load departments (${response.status}).`);
+        }
+
+        const data = getDoctorList(await response.json());
+        setDoctors(data.filter((doctor) => doctor && typeof doctor === 'object'));
+      } catch (fetchError) {
+        if (fetchError.name !== 'AbortError') {
+          console.error('Failed to fetch departments:', fetchError);
+          setError('Unable to load departments right now. Please try again later.');
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+
+    fetchDoctors();
+    return () => controller.abort();
+  }, []);
+
+  const departments = useMemo(() => {
+    const departmentMap = new Map();
+
+    doctors.forEach((doctor) => {
+      if (typeof doctor.department !== 'string' || !doctor.department.trim()) return;
+
+      const name = doctor.department.trim();
+      const key = name.toLowerCase();
+      if (!departmentMap.has(key)) {
+        departmentMap.set(key, { id: key, name, doctors: [] });
+      }
+      departmentMap.get(key).doctors.push(doctor);
+    });
+
+    return [...departmentMap.values()].map((department) => {
+      const categories = [...new Set(
+        department.doctors
+          .map((doctor) => doctor.deptCategory)
+          .filter((category) => typeof category === 'string' && category.trim())
+          .map((category) => category.trim())
+      )];
+      const qualifications = [...new Set(
+        department.doctors
+          .map((doctor) => doctor.degrees)
+          .filter((degrees) => typeof degrees === 'string' && degrees.trim())
+          .map((degrees) => degrees.trim())
+      )].slice(0, 3);
+      const description = department.doctors.find(
+        (doctor) => typeof doctor.articleDesc === 'string' && doctor.articleDesc.trim()
+      )?.articleDesc;
+
+      return {
+        ...department,
+        category: categories[0] || 'Specialty',
+        categories,
+        description: description || `${department.doctors.length} doctor ${department.doctors.length === 1 ? 'profile is' : 'profiles are'} listed in this department.`,
+        qualifications,
+        popularSpecialist: department.doctors.find(
+          (doctor) => typeof doctor.name === 'string' && doctor.name.trim()
+        )?.name,
+        icon: getDepartmentIcon(department.name),
+      };
+    });
+  }, [doctors]);
+
+  const categories = useMemo(
+    () => ['All', ...new Set(departments.flatMap((department) => department.categories))],
+    [departments]
+  );
+
+  const filteredDepartments = departments.filter((department) => {
+    const matchesCategory =
+      selectedCategory === 'All' || department.categories.includes(selectedCategory);
+    const searchableText = [
+      department.name,
+      department.description,
+      ...department.categories,
+      ...department.doctors.flatMap((doctor) => [
+        doctor.name,
+        doctor.degrees,
+        doctor.designation,
+        doctor.location,
+      ]),
+    ]
+      .filter((value) => typeof value === 'string')
+      .join(' ')
+      .toLowerCase();
+    return matchesCategory && searchableText.includes(searchQuery.toLowerCase());
   });
 
   return (
@@ -149,7 +174,9 @@ export default function Departments() {
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold text-[11px]">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>28 Specialized Clinical Wings Available</span>
+            <span>
+              {isLoading ? 'Loading departments…' : `${departments.length} Departments · ${doctors.length} Doctor Profiles`}
+            </span>
           </div>
         </div>
 
@@ -166,7 +193,7 @@ export default function Departments() {
             </span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
-            Every clinical discipline is governed by certified senior specialists adhering to international healthcare delivery benchmarks and zero-wait OPD scheduling.
+            Browse departments based on the specialties represented in our doctor directory, and view the doctors and qualifications listed for each one.
           </p>
         </div>
 
@@ -188,7 +215,7 @@ export default function Departments() {
 
             {/* Category Pills */}
             <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto scrollbar-none">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -207,6 +234,24 @@ export default function Departments() {
         </div>
 
         {/* 4. DEPARTMENT CARDS GRID */}
+        {isLoading ? (
+          <div className="flex min-h-56 items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-white text-sm font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            <Loader2 className="h-5 w-5 animate-spin text-[#0F766E]" />
+            Loading department directory…
+          </div>
+        ) : error ? (
+          <p role="alert" className="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-10 text-center text-sm font-medium text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+            {error}
+          </p>
+        ) : departments.length === 0 ? (
+          <p className="rounded-3xl border border-slate-200 bg-white px-5 py-10 text-center text-sm font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            No departments are available yet.
+          </p>
+        ) : filteredDepartments.length === 0 ? (
+          <p className="rounded-3xl border border-slate-200 bg-white px-5 py-10 text-center text-sm font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            No departments match your search. Try another search term or category.
+          </p>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <AnimatePresence mode="popLayout">
             {filteredDepartments.map((dept) => {
@@ -231,7 +276,7 @@ export default function Departments() {
                       </div>
 
                       <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-1 rounded-full">
-                        {dept.doctorCount} Doctors
+                        {dept.doctors.length} {dept.doctors.length === 1 ? 'Doctor' : 'Doctors'}
                       </span>
                     </div>
 
@@ -248,33 +293,36 @@ export default function Departments() {
                       </p>
                     </div>
 
-                    {/* Common Treatments Badges */}
-                    <div className="space-y-1.5 pt-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Featured Pathways
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {dept.commonTreatments.map((treatment, idx) => (
-                          <span
-                            key={idx}
-                            className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-lg"
-                          >
-                            {treatment}
-                          </span>
-                        ))}
+                    {dept.qualifications.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Doctor qualifications
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {dept.qualifications.map((qualification) => (
+                            <span
+                              key={qualification}
+                              className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-lg"
+                            >
+                              {qualification}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                   </div>
 
                   {/* Footer Action Bar */}
                   <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400 font-bold">Key Consultant:</span>
-                      <span className="font-extrabold text-[#12343B] dark:text-slate-200 truncate max-w-[150px]">
-                        {dept.popularSpecialist}
-                      </span>
-                    </div>
+                    {dept.popularSpecialist && (
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="shrink-0 text-slate-400 font-bold">Listed doctor:</span>
+                        <span className="max-w-[180px] truncate font-extrabold text-[#12343B] dark:text-slate-200">
+                          {dept.popularSpecialist}
+                        </span>
+                      </div>
+                    )}
 
                     <Button
                       as={Link}
@@ -291,19 +339,20 @@ export default function Departments() {
             })}
           </AnimatePresence>
         </div>
+        )}
 
         {/* 5. HERO CALL TO ACTION */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0F766E] via-teal-800 to-slate-900 p-8 sm:p-12 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-8">
           <div className="space-y-3 max-w-2xl text-center sm:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold text-teal-100 border border-white/20">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Zero-Wait OPD OPD Chamber Queue</span>
+              <span>Find care that fits your needs</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black font-[#Manrope] leading-snug">
               Need Help Choosing the Right Department?
             </h2>
             <p className="text-xs sm:text-sm text-teal-100 font-normal">
-              Use our interactive symptom router or directly browse accredited senior consultants.
+              Browse the doctor profiles and specialties currently listed in our directory.
             </p>
           </div>
 

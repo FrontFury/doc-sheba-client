@@ -1,13 +1,80 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { DEPARTMENTS_BY_PART, DOCTORS_BY_DEPT } from "@/data/bodyData";
 import BodyModelSvg from "./BodyModelSvg";
-import { User, UserCheck, Stethoscope, Star, ArrowRight } from "lucide-react";
+import {
+  User,
+  UserCheck,
+  Stethoscope,
+  Star,
+  ArrowRight,
+  MapPin,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@heroui/react";
+
+const BODY_PART_SPECIALTY_TERMS = {
+  head: [
+    "neurolog", "brain", "ophthalm", "eye", "ent", "ear", "nose", "throat",
+    "dent", "oral", "psychiatr", "mental",
+  ],
+  chest: [
+    "cardio", "heart", "cardiac", "respir", "pulmon", "lung", "thoracic",
+  ],
+  abdomen: [
+    "gastro", "digest", "hepat", "liver", "nephro", "kidney", "urolog",
+    "general surgery",
+  ],
+  pelvis: [
+    "gyne", "gynae", "obstet", "reproduct", "uro", "pelvic",
+  ],
+  arms: [
+    "orthop", "bone", "joint", "rheumat", "physical medicine", "rehab",
+    "musculoskeletal",
+  ],
+  legs: [
+    "orthop", "bone", "joint", "vascular", "physical medicine", "rehab",
+    "musculoskeletal",
+  ],
+};
+
+const getDoctorList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.doctors)) return payload.doctors;
+  if (Array.isArray(payload?.data?.doctors)) return payload.data.doctors;
+  throw new Error("The doctors API returned an invalid response.");
+};
+
+const getDoctorSpecialty = (doctor) => {
+  const specialty =
+    doctor.department ||
+    doctor.deptCategory ||
+    doctor.specialty ||
+    doctor.speciality;
+  return typeof specialty === "string" ? specialty : "";
+};
+
+const getDepartmentsForPart = (doctors, part) => {
+  const terms = BODY_PART_SPECIALTY_TERMS[part] || [];
+  const matches = new Map();
+
+  doctors.forEach((doctor) => {
+    const specialty = getDoctorSpecialty(doctor);
+    if (
+      specialty &&
+      terms.some((term) => specialty.toLowerCase().includes(term))
+    ) {
+      const key = specialty.trim().toLowerCase();
+      if (!matches.has(key)) matches.set(key, specialty.trim());
+    }
+  });
+
+  return [...matches.values()];
+};
 
 const listVariants = {
   hidden: { opacity: 0 },
@@ -32,10 +99,62 @@ const itemVariants = {
 export default function SymptomSelector() {
   const [gender, setGender] = useState("male");
   const [selectedPart, setSelectedPart] = useState("chest");
-  const [selectedDept, setSelectedDept] = useState("Cardiology");
+  const [selectedDept, setSelectedDept] = useState("");
+  const [doctors, setDoctors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const activeDepartments = DEPARTMENTS_BY_PART[selectedPart] || [];
-  const activeDoctors = selectedDept ? DOCTORS_BY_DEPT[selectedDept] || [] : [];
+  useEffect(() => {
+    const controller = new AbortController();
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+    const fetchDoctors = async () => {
+      try {
+        if (!baseUrl) {
+          throw new Error("NEXT_PUBLIC_BASE_URL is not configured.");
+        }
+
+        const response = await fetch(
+          `${baseUrl.replace(/\/$/, "")}/api/doctors`,
+          { signal: controller.signal }
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to load doctors (${response.status}).`);
+        }
+
+        const doctorList = getDoctorList(await response.json());
+        setDoctors(doctorList.filter((doctor) => doctor && typeof doctor === "object"));
+      } catch (fetchError) {
+        if (fetchError.name !== "AbortError") {
+          console.error("Failed to fetch doctors for symptom selector:", fetchError);
+          setError("Unable to load doctor information. Please try again later.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+
+    fetchDoctors();
+    return () => controller.abort();
+  }, []);
+
+  const activeDepartments = useMemo(
+    () => getDepartmentsForPart(doctors, selectedPart),
+    [doctors, selectedPart]
+  );
+  const activeDepartment = activeDepartments.includes(selectedDept)
+    ? selectedDept
+    : activeDepartments[0] || "";
+  const activeDoctors = useMemo(
+    () => doctors.filter((doctor) => {
+      const specialty = getDoctorSpecialty(doctor);
+      return (
+        activeDepartment &&
+        specialty.trim().toLowerCase() === activeDepartment.trim().toLowerCase()
+      );
+    }),
+    [doctors, activeDepartment]
+  );
 
   const handlePartSelect = (partId) => {
     // Map SVG specific sub-parts to high-level clinical categories
@@ -45,8 +164,8 @@ export default function SymptomSelector() {
     if (partId === "neck") mappedPart = "head";
 
     setSelectedPart(mappedPart);
-    const firstDept = DEPARTMENTS_BY_PART[mappedPart]?.[0] || null;
-    setSelectedDept(firstDept);
+    const matchingDepartments = getDepartmentsForPart(doctors, mappedPart);
+    setSelectedDept(matchingDepartments[0] || "");
   };
 
   const handleGenderChange = (newGender) => {
@@ -151,13 +270,26 @@ export default function SymptomSelector() {
               key={selectedPart}
               className="flex flex-col gap-3"
             >
-              {activeDepartments.length === 0 ? (
+              {isLoading ? (
+                <div className="flex items-center gap-2 py-4 text-xs font-medium text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0F766E]" />
+                  Loading specialties…
+                </div>
+              ) : error ? (
+                <p role="alert" className="py-4 text-xs text-rose-600 dark:text-rose-400">
+                  {error}
+                </p>
+              ) : doctors.length === 0 ? (
+                <p className="py-4 text-xs text-slate-500">
+                  No doctor profiles are available yet.
+                </p>
+              ) : activeDepartments.length === 0 ? (
                 <p className="text-xs text-slate-500 py-4">
-                  No departments available for this area.
+                  No listed specialties match this body area yet.
                 </p>
               ) : (
                 activeDepartments.map((dept) => {
-                  const isSelected = selectedDept === dept;
+                  const isSelected = activeDepartment === dept;
                   return (
                     <motion.button
                       key={dept}
@@ -209,18 +341,47 @@ export default function SymptomSelector() {
               className="flex flex-col gap-4"
             >
               <AnimatePresence mode="popLayout">
-                {activeDoctors.length === 0 ? (
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-8 text-xs font-medium text-slate-500">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#0F766E]" />
+                    Loading doctors…
+                  </div>
+                ) : error ? (
+                  <motion.p
+                    role="alert"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="py-8 text-center text-xs text-rose-600 dark:text-rose-400"
+                  >
+                    {error}
+                  </motion.p>
+                ) : doctors.length === 0 ? (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="py-8 text-center text-xs text-slate-500"
+                  >
+                    No doctor profiles are available yet.
+                  </motion.p>
+                ) : activeDoctors.length === 0 ? (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-xs text-slate-500 py-8 text-center"
                   >
-                    No specialists available for {selectedDept}.
+                    No doctors are listed for {activeDepartment || "this specialty"}.
                   </motion.p>
                 ) : (
-                  activeDoctors.map((doc) => (
+                  activeDoctors.map((doc, index) => {
+                    const doctorId = doc.doctorID || doc._id?.$oid || doc._id || doc.id;
+                    const doctorName = doc.name || "Doctor";
+                    const specialty = getDoctorSpecialty(doc);
+                    const qualifications = doc.degrees || doc.qualification || doc.qualifications || doc.designation || doc.title;
+                    const image = typeof doc.image === "string" ? doc.image : "";
+
+                    return (
                     <motion.div
-                      key={doc.id}
+                      key={`${String(doctorId || doctorName)}-${index}`}
                       layout
                       variants={itemVariants}
                       whileHover={{ y: -3 }}
@@ -228,40 +389,73 @@ export default function SymptomSelector() {
                       className="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm flex flex-col gap-3 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-center gap-3.5">
-                        <div className="relative w-14 h-14 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
-                          <Image
-                            src={doc.image}
-                            alt={doc.name}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative flex w-14 h-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-teal-50 text-teal-700 dark:border-slate-700 dark:bg-slate-700 dark:text-teal-200">
+                          {image ? (
+                            <Image
+                              src={image}
+                              alt={doctorName}
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                          ) : (
+                            <Stethoscope className="h-6 w-6" />
+                          )}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <h4 className="font-bold text-sm text-[#12343B] dark:text-white">
-                            {doc.name}
+                            {doctorName}
                           </h4>
-                          <p className="text-xs text-[#64748B] dark:text-slate-400">
-                            {doc.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1 text-[11px] font-semibold text-slate-500">
-                            <span className="flex items-center gap-0.5 text-amber-500">
-                              <Star className="w-3 h-3 fill-amber-400" /> {doc.rating}
-                            </span>
-                            <span>•</span>
-                            <span>BMDC: {doc.bmdc}</span>
+                          {qualifications && (
+                            <p className="truncate text-xs text-[#64748B] dark:text-slate-400">
+                              {qualifications}
+                            </p>
+                          )}
+                          {specialty && (
+                            <p className="truncate text-[11px] font-semibold text-[#0F766E] dark:text-teal-400">
+                              {specialty}
+                            </p>
+                          )}
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-slate-500">
+                            {doc.rating && (
+                              <span className="flex items-center gap-0.5 text-amber-500">
+                                <Star className="h-3 w-3 fill-amber-400" /> {doc.rating}
+                              </span>
+                            )}
+                            {doc.bmdcReg && <span>BMDC: {doc.bmdcReg}</span>}
+                            {doc.experience && <span>{doc.experience} experience</span>}
                           </div>
                         </div>
                       </div>
 
-                      <Button
-                        as={Link}
-                        href={`/book-appointment?doctor=${doc.id}`}
-                        className="w-full bg-[#0F766E] hover:bg-[#0E7490] text-white font-bold text-xs py-2.5 rounded-xl shadow-sm transition-all"
-                      >
-                        Book Appointment
-                      </Button>
+                      {(doc.location || doc.hospital) && (
+                        <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
+                          {doc.hospital || doc.location}
+                        </p>
+                      )}
+                      {doc.chamberFee && (
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                          Consultation fee: {String(doc.chamberFee).startsWith("৳") ? doc.chamberFee : `৳${doc.chamberFee}`}
+                        </p>
+                      )}
+
+                      {doctorId ? (
+                        <Button
+                          as={Link}
+                          href={`/book-appointment?doctor=${encodeURIComponent(String(doctorId))}`}
+                          className="w-full bg-[#0F766E] hover:bg-[#0E7490] text-white font-bold text-xs py-2.5 rounded-xl shadow-sm transition-all"
+                        >
+                          Book Appointment
+                        </Button>
+                      ) : (
+                        <p className="text-center text-xs text-slate-500">
+                          Contact the clinic to book.
+                        </p>
+                      )}
                     </motion.div>
-                  ))
+                    );
+                  })
                 )}
               </AnimatePresence>
             </motion.div>

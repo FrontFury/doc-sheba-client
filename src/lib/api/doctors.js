@@ -4,7 +4,9 @@ export const getDoctorDetails = async (doctorID) => {
   if (!doctorID) return null;
 
   try {
-    const res = await serverFetch(`/api/my/doctors?doctorID=${doctorID}`);
+    const res = await serverFetch(
+      `/api/my/doctors?doctorID=${encodeURIComponent(doctorID)}`
+    );
     
     if (!res) return null;
 

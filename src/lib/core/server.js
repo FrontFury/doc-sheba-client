@@ -2,18 +2,44 @@
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
+const getApiUrl = (path) => {
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_URL is not configured.");
+  }
+
+  return `${baseUrl.replace(/\/$/, "")}${path}`;
+};
+
 const parseResponse = async (res) => {
   const body = await res.text();
-  return body.trim() ? JSON.parse(body) : null;
+  let data = null;
+
+  if (body.trim()) {
+    try {
+      data = JSON.parse(body);
+    } catch {
+      if (res.ok) {
+        throw new Error("The backend returned an invalid response.");
+      }
+    }
+  }
+
+  if (!res.ok) {
+    throw new Error(
+      data?.message || `Backend request failed with status ${res.status}.`
+    );
+  }
+
+  return data;
 };
 
 export const serverFetch = async (path) => {
-  const res = await fetch(`${baseUrl}${path}`);
+  const res = await fetch(getApiUrl(path));
   return parseResponse(res);
 };
 
 export const serverMutation = async (path, data) => {
-  const res = await fetch(`${baseUrl}${path}`, {
+  const res = await fetch(getApiUrl(path), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
