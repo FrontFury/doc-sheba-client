@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import BodyModelSvg from "./BodyModelSvg";
 import {
@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@heroui/react";
+import { hasActivePatientSession } from "@/lib/actions/appointments";
 
 const BODY_PART_SPECIALTY_TERMS = {
   head: [
@@ -97,12 +98,39 @@ const itemVariants = {
 };
 
 export default function SymptomSelector() {
+  const router = useRouter();
   const [gender, setGender] = useState("male");
   const [selectedPart, setSelectedPart] = useState("chest");
   const [selectedDept, setSelectedDept] = useState("");
   const [doctors, setDoctors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bookingDoctorId, setBookingDoctorId] = useState("");
+  const [bookingError, setBookingError] = useState("");
+  const [bookingErrorDoctorId, setBookingErrorDoctorId] = useState("");
+
+  const handleBookAppointment = async (doctorId) => {
+    const requestedDoctorId = String(doctorId);
+    setBookingDoctorId(requestedDoctorId);
+    setBookingError("");
+    setBookingErrorDoctorId("");
+
+    try {
+      const bookingUrl = `/book-appointment?doctor=${encodeURIComponent(requestedDoctorId)}`;
+      const isAuthenticated = await hasActivePatientSession();
+
+      router.push(
+        isAuthenticated
+          ? bookingUrl
+          : `/auth/signin?callbackUrl=${encodeURIComponent(bookingUrl)}`
+      );
+    } catch (sessionError) {
+      console.error("Unable to verify the patient session:", sessionError);
+      setBookingError("Unable to verify your session. Please try again.");
+      setBookingErrorDoctorId(requestedDoctorId);
+      setBookingDoctorId("");
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -442,15 +470,24 @@ export default function SymptomSelector() {
 
                       {doctorId ? (
                         <Button
-                          as={Link}
-                          href={`/book-appointment?doctor=${encodeURIComponent(String(doctorId))}`}
+                          type="button"
+                          onPress={() => handleBookAppointment(doctorId)}
+                          isDisabled={Boolean(bookingDoctorId)}
                           className="w-full bg-[#0F766E] hover:bg-[#0E7490] text-white font-bold text-xs py-2.5 rounded-xl shadow-sm transition-all"
                         >
-                          Book Appointment
+                          {bookingDoctorId === String(doctorId) ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : null}
+                          {bookingDoctorId === String(doctorId) ? "Checking session…" : "Book Appointment"}
                         </Button>
                       ) : (
                         <p className="text-center text-xs text-slate-500">
                           Contact the clinic to book.
+                        </p>
+                      )}
+                      {bookingError && bookingErrorDoctorId === String(doctorId) && (
+                        <p role="alert" className="text-center text-xs font-semibold text-rose-600">
+                          {bookingError}
                         </p>
                       )}
                     </motion.div>

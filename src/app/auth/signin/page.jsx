@@ -30,15 +30,23 @@ export default function SignInPage() {
     setError("");
 
     try {
+      const requestedCallbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+      let callbackUrl = "/";
+      if (requestedCallbackUrl?.startsWith("/")) {
+        const resolvedCallbackUrl = new URL(requestedCallbackUrl, window.location.origin);
+        if (resolvedCallbackUrl.origin === window.location.origin) {
+          callbackUrl = `${resolvedCallbackUrl.pathname}${resolvedCallbackUrl.search}${resolvedCallbackUrl.hash}`;
+        }
+      }
       const { error: authError } = await signIn.email({
         email: formData.email,
         password: formData.password,
-        callbackURL: "/",
+        callbackURL: callbackUrl,
       });
 
       if (authError)
         setError(authError.message || "Invalid email or password.");
-      else router.push("/");
+      else router.push(callbackUrl);
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
     } finally {

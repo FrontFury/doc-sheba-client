@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search,
@@ -19,8 +19,10 @@ import {
   MapPin,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
+import { hasActivePatientSession } from '@/lib/actions/appointments';
 
 export default function FindDoctors() {
+  const router = useRouter();
   const [doctors, setDoctors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,6 +31,9 @@ export default function FindDoctors() {
   const [selectedWing, setSelectedWing] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [bookingDoctorId, setBookingDoctorId] = useState('');
+  const [bookingError, setBookingError] = useState('');
+  const [bookingErrorDoctorId, setBookingErrorDoctorId] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -108,6 +113,29 @@ export default function FindDoctors() {
   });
 
   const ratingCount = doctors.filter((doctor) => Number(doctor.rating) > 0).length;
+
+  const handleBookAppointment = async (doctorId) => {
+    const requestedDoctorId = String(doctorId);
+    setBookingDoctorId(requestedDoctorId);
+    setBookingError('');
+    setBookingErrorDoctorId('');
+
+    try {
+      const bookingUrl = `/book-appointment?doctor=${encodeURIComponent(requestedDoctorId)}`;
+      const isAuthenticated = await hasActivePatientSession();
+
+      if (isAuthenticated) {
+        router.push(bookingUrl);
+      } else {
+        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(bookingUrl)}`);
+      }
+    } catch (bookingError) {
+      console.error('Unable to verify the patient session:', bookingError);
+      setBookingError('Unable to verify your session. Please try again.');
+      setBookingErrorDoctorId(requestedDoctorId);
+      setBookingDoctorId('');
+    }
+  };
   const averageRating = ratingCount
     ? (doctors.reduce((total, doctor) => total + (Number(doctor.rating) || 0), 0) /
         ratingCount).toFixed(1)
@@ -462,16 +490,26 @@ export default function FindDoctors() {
 
                       {doctorId ? (
                         <Button
-                          as={Link}
-                          href={`/book-appointment?doctor=${encodeURIComponent(String(doctorId))}`}
+                          type="button"
+                          onPress={() => handleBookAppointment(doctorId)}
+                          isDisabled={Boolean(bookingDoctorId)}
                           className="w-full bg-[#0F766E] hover:bg-[#0E7490] text-white font-extrabold text-xs py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2"
                         >
-                          <span>Book Appointment</span>
-                          <ArrowRight className="h-4 w-4" />
+                          {bookingDoctorId === String(doctorId) ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                          <span>{bookingDoctorId === String(doctorId) ? 'Checking session…' : 'Book Appointment'}</span>
                         </Button>
                       ) : (
                         <p className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 py-2">
                           Contact clinic to book
+                        </p>
+                      )}
+                      {bookingError && bookingErrorDoctorId === String(doctorId) && (
+                        <p role="alert" className="text-center text-xs font-semibold text-rose-600">
+                          {bookingError}
                         </p>
                       )}
                     </div>

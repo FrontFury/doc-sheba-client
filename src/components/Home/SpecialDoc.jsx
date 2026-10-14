@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Star, ChevronRight, Stethoscope, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@heroui/react";
+import { hasActivePatientSession } from "@/lib/actions/appointments";
 
 const getDoctorList = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -42,9 +43,36 @@ const cardVariants = {
 };
 
 export default function SpecialDoc() {
+  const router = useRouter();
   const [doctors, setDoctors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bookingDoctorId, setBookingDoctorId] = useState("");
+  const [bookingError, setBookingError] = useState("");
+  const [bookingErrorDoctorId, setBookingErrorDoctorId] = useState("");
+
+  const handleBookAppointment = async (doctorId) => {
+    const requestedDoctorId = String(doctorId);
+    setBookingDoctorId(requestedDoctorId);
+    setBookingError("");
+    setBookingErrorDoctorId("");
+
+    try {
+      const bookingUrl = `/book-appointment?doctor=${encodeURIComponent(requestedDoctorId)}`;
+      const isAuthenticated = await hasActivePatientSession();
+
+      router.push(
+        isAuthenticated
+          ? bookingUrl
+          : `/auth/signin?callbackUrl=${encodeURIComponent(bookingUrl)}`
+      );
+    } catch (sessionError) {
+      console.error("Unable to verify the patient session:", sessionError);
+      setBookingError("Unable to verify your session. Please try again.");
+      setBookingErrorDoctorId(requestedDoctorId);
+      setBookingDoctorId("");
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -271,13 +299,22 @@ export default function SpecialDoc() {
 
                 {id ? <motion.div whileTap={{ scale: 0.98 }}>
                   <Button
-                    as={Link}
-                    href={`/doctors/${encodeURIComponent(String(id))}`}
+                    type="button"
+                    onPress={() => handleBookAppointment(id)}
+                    isDisabled={Boolean(bookingDoctorId)}
                     endContent={<ChevronRight className="w-4 h-4 ml-0.5 group-hover:translate-x-1 transition-transform" />}
                     className="w-full bg-gradient-to-r from-[#0F766E] to-emerald-600 text-white font-bold text-xs sm:text-sm py-2.5 rounded-xl transition-all duration-200 shadow-md shadow-teal-900/15 hover:from-[#0E7490] hover:to-teal-600"
                   >
-                    Book Consultation
+                    {bookingDoctorId === String(id) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : null}
+                    {bookingDoctorId === String(id) ? "Checking session…" : "Book Appointment"}
                   </Button>
+                  {bookingError && bookingErrorDoctorId === String(id) && (
+                    <p role="alert" className="mt-2 text-center text-xs font-semibold text-rose-600">
+                      {bookingError}
+                    </p>
+                  )}
                 </motion.div> : (
                   <p className="text-center text-xs font-medium text-slate-500">
                     Contact the clinic to book.
