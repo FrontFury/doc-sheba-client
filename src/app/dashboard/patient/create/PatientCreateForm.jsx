@@ -21,6 +21,7 @@ const labelClassName = "block text-xs font-extrabold text-slate-500 mb-1";
 
 export default function PatientCreateForm({ user, patientDetails }) {
   const [formData, setFormData] = useState({
+    patientID: patientDetails?.patientID || user?.id || "",
     name: patientDetails?.name || user?.name || "",
     email: patientDetails?.email || user?.email || "",
     phone: patientDetails?.phone || "",

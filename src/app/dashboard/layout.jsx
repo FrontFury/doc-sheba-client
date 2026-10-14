@@ -25,7 +25,8 @@ export default function DashboardLayout({ children }) {
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Doctor Profile", href: "/dashboard/doctor-profile", icon: UserSearch },
-    { name: "MyAppointments", href: "/dashboard/appointments", icon: CalendarCheck },
+    { name: "My Appointments", href: "/dashboard/patient/my-appointments", icon: CalendarCheck },
+    { name: "Doctor Appointments", href: "/dashboard/doctor/all-appointments", icon: CalendarCheck },
     { name: "Medical Records", href: "/dashboard/records", icon: FileText },
     { name: "Prescriptions", href: "/dashboard/prescriptions", icon: Pill },
     { name: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 3 },
@@ -136,7 +137,9 @@ export default function DashboardLayout({ children }) {
             <nav className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href || (item.name === "Dashboard" && pathname === "/");
+                const isActive =
+                  pathname === item.href ||
+                  (item.name === "Dashboard" && pathname === "/");
 
                 return (
                   <Link

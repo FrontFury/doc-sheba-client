@@ -30,6 +30,7 @@ export const createPatient = async (newPatientData) => {
 
     const createdPatient = await serverMutation("/api/patients", {
       ...patientData,
+      patientID: user.id,
       userID: user.id,
       email: user.email,
     });
