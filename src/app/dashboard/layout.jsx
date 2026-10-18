@@ -16,6 +16,7 @@ import {
   FileText,
   Pill,
   User,
+  Users,
   LogOut,
   Headphones,
 } from "lucide-react";
@@ -24,14 +25,21 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isDoctor = session?.user?.role === "doctor";
+  const isAdmin = session?.user?.role === "admin";
 
   const navItems = [
     {
       name: "Dashboard",
-      href: isDoctor ? "/dashboard/doctor" : "/dashboard/patient",
+      href: isAdmin
+        ? "/dashboard/admin"
+        : isDoctor
+          ? "/dashboard/doctor"
+          : "/dashboard/patient",
       icon: LayoutDashboard,
     },
-    ...(isDoctor
+    ...(isAdmin
+      ? [{ name: "Users", href: "/dashboard/admin/users", icon: Users }]
+      : isDoctor
       ? [
           { name: "Doctor Profile", href: "/dashboard/doctor/doctor-profile", icon: UserSearch },
           { name: "Doctor Appointments", href: "/dashboard/doctor/all-appointments", icon: CalendarCheck },
