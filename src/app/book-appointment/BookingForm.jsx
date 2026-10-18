@@ -36,8 +36,8 @@ const formatFee = (amount) =>
   amount === null ? "Contact clinic" : `৳${amount.toLocaleString("en-BD")}`;
 
 const inputClassName =
-  "mt-1.5 w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-3 text-sm font-semibold text-[#12343B] outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-emerald-500/15 disabled:cursor-not-allowed disabled:bg-slate-100";
-const labelClassName = "text-xs font-extrabold text-slate-600";
+  "mt-1.5 w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-3 text-sm font-semibold text-[#12343B] outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-[#0F766E] focus:ring-2 focus:ring-emerald-500/15 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-800";
+const labelClassName = "text-xs font-extrabold text-slate-600 dark:text-slate-300";
 
 export default function BookingForm({
   doctorId,
@@ -91,12 +91,12 @@ export default function BookingForm({
 
   if (isSubmitted) {
     return (
-      <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-        <div className="flex items-center gap-2 font-extrabold text-emerald-900">
+      <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/50">
+        <div className="flex items-center gap-2 font-extrabold text-emerald-900 dark:text-emerald-200">
           <CheckCircle2 className="h-5 w-5" />
           Appointment request received
         </div>
-        <p className="mt-2 text-sm leading-6 text-emerald-900/75">
+        <p className="mt-2 text-sm leading-6 text-emerald-900/75 dark:text-emerald-200/75">
           Your request to see {doctorName} has been sent. The clinic will confirm your appointment. Payment has not been processed.
         </p>
       </div>
@@ -172,8 +172,8 @@ export default function BookingForm({
               key={type.value}
               className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3.5 py-3 text-sm font-bold transition ${
                 formData.consultationType === type.value
-                  ? "border-[#0F766E] bg-teal-50 text-[#0F766E]"
-                  : "border-slate-200 bg-white/70 text-slate-600 hover:border-teal-300"
+                  ? "border-[#0F766E] bg-teal-50 text-[#0F766E] dark:border-teal-500 dark:bg-teal-950 dark:text-teal-300"
+                  : "border-slate-200 bg-white/70 text-slate-600 hover:border-teal-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-teal-700"
               }`}
             >
               <input
@@ -191,7 +191,7 @@ export default function BookingForm({
       </fieldset>
 
       <label className={labelClassName} htmlFor="notes">
-        Reason / symptoms <span className="font-semibold text-slate-400">(optional)</span>
+        Reason / symptoms         <span className="font-semibold text-slate-400 dark:text-slate-500">(optional)</span>
         <textarea
           id="notes"
           name="notes"
@@ -204,32 +204,32 @@ export default function BookingForm({
         />
       </label>
 
-      <div className="rounded-2xl border border-teal-100 bg-[#F4FAF9] p-4">
-        <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#0F766E]">
+      <div className="rounded-2xl border border-teal-100 bg-[#F4FAF9] p-4 dark:border-slate-700 dark:bg-slate-800/70">
+        <div className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#0F766E] dark:text-teal-400">
           <CreditCard className="h-4 w-4" />
           Fee breakdown
         </div>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between gap-3 text-slate-600">
+          <div className="flex justify-between gap-3 text-slate-600 dark:text-slate-300">
             <span>Chamber fee</span>
-            <span className="font-bold text-[#12343B]">{formatFee(chamberFee)}</span>
+            <span className="font-bold text-[#12343B] dark:text-slate-100">{formatFee(chamberFee)}</span>
           </div>
-          <div className="flex justify-between gap-3 text-slate-600">
+          <div className="flex justify-between gap-3 text-slate-600 dark:text-slate-300">
             <span>Service charge</span>
-            <span className="font-bold text-[#12343B]">{formatFee(serviceCharge)}</span>
+            <span className="font-bold text-[#12343B] dark:text-slate-100">{formatFee(serviceCharge)}</span>
           </div>
-          <div className="flex justify-between gap-3 border-t border-teal-900/10 pt-3 font-black text-[#12343B]">
+          <div className="flex justify-between gap-3 border-t border-teal-900/10 pt-3 font-black text-[#12343B] dark:border-slate-600 dark:text-slate-100">
             <span>Total</span>
             <span>{formatFee(total)}</span>
           </div>
         </div>
-        <p className="mt-3 text-[11px] leading-5 text-slate-500">
+        <p className="mt-3 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
           Payment is not collected here. The clinic will confirm your request and payment arrangements.
         </p>
       </div>
 
       {errorMessage && (
-        <div role="alert" className="flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
+        <div role="alert" className="flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
@@ -243,7 +243,7 @@ export default function BookingForm({
         {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
         {isSubmitting ? "Booking appointment…" : "Book Appointment"}
       </button>
-      <p className="flex items-center justify-center gap-1.5 text-center text-[11px] font-semibold text-slate-400">
+      <p className="flex items-center justify-center gap-1.5 text-center text-[11px] font-semibold text-slate-400 dark:text-slate-500">
         <ShieldCheck className="h-3.5 w-3.5" />
         Your request is sent securely to DocSheba
       </p>

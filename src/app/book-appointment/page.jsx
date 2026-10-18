@@ -22,9 +22,9 @@ const getFeeAmount = (fee) => {
 
 function BookingLoading() {
   return (
-    <div className="flex min-h-[55vh] flex-col items-center justify-center gap-3 text-[#0F766E]">
+    <div className="flex min-h-[55vh] flex-col items-center justify-center gap-3 text-[#0F766E] dark:text-teal-400">
       <Loader2 className="h-8 w-8 animate-spin" />
-      <p className="text-sm font-semibold text-slate-500">Loading secure booking…</p>
+      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Loading secure booking…</p>
     </div>
   );
 }
@@ -91,7 +91,7 @@ async function BookingContent({ doctorId }) {
 
   return (
     <main
-      className="relative min-h-screen overflow-hidden bg-[#F4FAF9] px-4 py-10 text-[#12343B] sm:px-6 lg:px-8"
+      className="relative min-h-screen overflow-hidden bg-[#F4FAF9] px-4 py-10 text-[#12343B] dark:bg-slate-950 dark:text-slate-100 sm:px-6 lg:px-8"
       style={{ fontFamily: "var(--font-manrope), Manrope, sans-serif" }}
     >
       <div className="pointer-events-none absolute -left-32 top-16 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl" />
@@ -99,25 +99,25 @@ async function BookingContent({ doctorId }) {
 
       <div className="relative mx-auto max-w-7xl space-y-8">
         <header className="space-y-3">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider text-[#0F766E] shadow-sm backdrop-blur">
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider text-[#0F766E] shadow-sm backdrop-blur dark:border-emerald-900 dark:bg-slate-900/70 dark:text-teal-400">
             <ShieldCheck className="h-4 w-4" />
             Secure appointment booking
           </span>
           <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Book your appointment</h1>
-          <p className="max-w-2xl text-sm leading-6 text-slate-600">
+          <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
             Choose a preferred time and consultation type. The clinic will confirm your appointment request.
           </p>
         </header>
 
         <div className="grid items-start gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/70 p-5 shadow-xl shadow-teal-950/5 backdrop-blur-2xl sm:p-7">
-            <div className="mb-6 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#0F766E]">
+          <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/70 p-5 shadow-xl shadow-teal-950/5 backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-900/80 sm:p-7">
+            <div className="mb-6 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#0F766E] dark:text-teal-400">
               <Stethoscope className="h-4 w-4" />
               Doctor overview
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-teal-100 bg-teal-50 text-[#0F766E]">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-teal-100 bg-teal-50 text-[#0F766E] dark:border-teal-900 dark:bg-teal-950 dark:text-teal-400">
                 {doctor.image ? (
                   <Image src={doctor.image} alt={doctorName} fill unoptimized className="object-cover" />
                 ) : (
@@ -126,18 +126,18 @@ async function BookingContent({ doctorId }) {
               </div>
               <div className="min-w-0">
                 <h2 className="text-xl font-black leading-tight">{doctorName}</h2>
-                <p className="mt-1 text-sm font-bold text-[#0F766E]">{specialty}</p>
+                <p className="mt-1 text-sm font-bold text-[#0F766E] dark:text-teal-400">{specialty}</p>
                 {doctor.designation && (
-                  <p className="mt-1 text-xs font-semibold text-slate-600">{doctor.designation}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{doctor.designation}</p>
                 )}
-                <p className="mt-1 text-xs leading-5 text-slate-500">{doctor.degrees || "Qualifications not listed"}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{doctor.degrees || "Qualifications not listed"}</p>
               </div>
             </div>
 
-            <div className="mt-7 space-y-4 border-t border-teal-900/10 pt-6">
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
-                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-800">Chamber fee</p>
-                <p className="mt-1 text-xl font-black text-[#12343B]">
+            <div className="mt-7 space-y-4 border-t border-teal-900/10 pt-6 dark:border-slate-700">
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4 dark:border-emerald-900 dark:bg-emerald-950/50">
+                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">Chamber fee</p>
+                <p className="mt-1 text-xl font-black text-[#12343B] dark:text-slate-100">
                   {chamberFee === null ? "Contact clinic" : `৳${chamberFee.toLocaleString("en-BD")}`}
                 </p>
               </div>
@@ -153,25 +153,25 @@ async function BookingContent({ doctorId }) {
               />
             </div>
 
-            <div className="mt-7 rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
-              <div className="flex items-center gap-2 text-sm font-extrabold text-emerald-900">
-                <ShieldCheck className="h-4 w-4 text-emerald-700" />
+            <div className="mt-7 rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4 dark:border-emerald-900 dark:bg-emerald-950/50">
+              <div className="flex items-center gap-2 text-sm font-extrabold text-emerald-900 dark:text-emerald-200">
+                <ShieldCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                 Your information is protected
               </div>
-              <p className="mt-1.5 text-xs leading-5 text-emerald-900/70">
+              <p className="mt-1.5 text-xs leading-5 text-emerald-900/70 dark:text-emerald-200/70">
                 Patient details are taken from your DocSheba account and verified again when you submit.
               </p>
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-teal-950/5 backdrop-blur-2xl sm:p-7">
+          <section className="rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-teal-950/5 backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-900/80 sm:p-7">
             <div className="mb-6">
               <h2 className="text-xl font-black">Appointment details</h2>
-              <p className="mt-1 text-sm text-slate-500">Your profile details are read-only for your security.</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Your profile details are read-only for your security.</p>
             </div>
 
             {!patientProfileReady && (
-              <div role="alert" className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <div role="alert" className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
                 <p className="font-extrabold">Complete your patient profile to book</p>
                 <p className="mt-1 text-xs leading-5">
                   Add your name, email, and phone number to your account before submitting an appointment request.
@@ -196,12 +196,12 @@ async function BookingContent({ doctorId }) {
 function DoctorDetail({ icon: Icon, title, value }) {
   return (
     <div className="flex gap-3">
-      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-[#0F766E]">
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-[#0F766E] dark:bg-teal-950 dark:text-teal-400">
         <Icon className="h-4 w-4" />
       </span>
       <div>
         <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{title}</p>
-        <p className="mt-1 text-sm font-semibold leading-5 text-slate-700">{value}</p>
+        <p className="mt-1 text-sm font-semibold leading-5 text-slate-700 dark:text-slate-200">{value}</p>
       </div>
     </div>
   );
@@ -209,13 +209,13 @@ function DoctorDetail({ icon: Icon, title, value }) {
 
 function BookingMessage({ title, message, actionHref, actionLabel }) {
   return (
-    <main className="flex min-h-[65vh] items-center justify-center bg-[#F4FAF9] px-4 py-12">
-      <section className="w-full max-w-lg rounded-3xl border border-white bg-white/80 p-8 text-center shadow-xl backdrop-blur-xl">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-[#0F766E]">
+    <main className="flex min-h-[65vh] items-center justify-center bg-[#F4FAF9] px-4 py-12 dark:bg-slate-950">
+      <section className="w-full max-w-lg rounded-3xl border border-white bg-white/80 p-8 text-center shadow-xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-[#0F766E] dark:bg-teal-950 dark:text-teal-400">
           <Stethoscope className="h-6 w-6" />
         </div>
-        <h1 className="mt-5 text-2xl font-black text-[#12343B]">{title}</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{message}</p>
+        <h1 className="mt-5 text-2xl font-black text-[#12343B] dark:text-slate-100">{title}</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{message}</p>
         <Link
           href={actionHref}
           className="mt-6 inline-flex rounded-xl bg-[#0F766E] px-5 py-3 text-sm font-extrabold text-white transition hover:bg-[#0B5F59]"
