@@ -38,14 +38,26 @@ export const serverFetch = async (path) => {
   return parseResponse(res);
 };
 
-export const serverMutation = async (path, data) => {
+const serverRequest = async (path, method, data) => {
   const res = await fetch(getApiUrl(path), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+    method,
+    ...(data === undefined
+      ? {}
+      : {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }),
   });
 
   return parseResponse(res);
 };
+
+export const serverMutation = async (path, data) =>
+  serverRequest(path, "POST", data);
+
+export const serverPatch = async (path, data) =>
+  serverRequest(path, "PATCH", data);
+
+export const serverDelete = async (path) => serverRequest(path, "DELETE");

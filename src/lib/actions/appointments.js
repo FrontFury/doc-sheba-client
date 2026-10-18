@@ -2,8 +2,99 @@
 
 import { getDoctorDetails } from "@/lib/api/doctors";
 import { getPatientDetails } from "@/lib/api/patients";
-import { getUserSession } from "@/lib/core/session";
-import { serverMutation } from "@/lib/core/server";
+import { getDoctorAppointments } from "@/lib/api/appointments";
+import { getUserSession, requireRole } from "@/lib/core/session";
+import {
+  serverDelete,
+  serverMutation,
+  serverPatch,
+} from "@/lib/core/server";
+
+const appointmentStatuses = ["pending", "confirmed", "completed", "cancelled"];
+
+const getAppointmentId = (appointment) =>
+  String(appointment?._id?.$oid ?? appointment?._id ?? appointment?.id ?? "");
+
+const getDoctorAppointment = async (appointmentId) => {
+  const user = await getUserSession();
+  const doctor = await getDoctorDetails(user.id);
+  const doctorId = doctor?.doctorID || user.id;
+  const appointments = await getDoctorAppointments(doctorId);
+  const appointment = appointments.find(
+    (item) => getAppointmentId(item) === appointmentId
+  );
+
+  return appointment;
+};
+
+export async function updateDoctorAppointmentStatus(appointmentId, status) {
+  await requireRole("doctor");
+
+  if (
+    typeof appointmentId !== "string" ||
+    !appointmentId.trim() ||
+    !appointmentStatuses.includes(status)
+  ) {
+    return { error: "Choose a valid appointment and status." };
+  }
+
+  try {
+    const appointment = await getDoctorAppointment(appointmentId);
+    if (!appointment) {
+      return { error: "Appointment not found for your doctor profile." };
+    }
+
+    const result = await serverPatch(
+      `/appointments/${encodeURIComponent(appointmentId)}/status`,
+      { status }
+    );
+
+    if (result?.success !== true) {
+      return { error: result?.message || "Appointment status was not updated." };
+    }
+
+    return { success: true, status };
+  } catch (error) {
+    console.error("Failed to update doctor appointment status:", error);
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unable to update the appointment status.",
+    };
+  }
+}
+
+export async function deleteDoctorAppointment(appointmentId) {
+  await requireRole("doctor");
+
+  if (typeof appointmentId !== "string" || !appointmentId.trim()) {
+    return { error: "Choose a valid appointment to delete." };
+  }
+
+  try {
+    const appointment = await getDoctorAppointment(appointmentId);
+    if (!appointment) {
+      return { error: "Appointment not found for your doctor profile." };
+    }
+
+    const result = await serverDelete(
+      `/appointments/${encodeURIComponent(appointmentId)}`
+    );
+
+    if (result?.success !== true) {
+      return { error: result?.message || "Appointment was not deleted." };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete doctor appointment:", error);
+    return {
+      error:
+        error instanceof Error ? error.message : "Unable to delete the appointment.",
+    };
+  }
+}
 
 const getFeeAmount = (fee) => {
   const value = String(fee ?? "").replace(/,/g, "").replace(/[^\d.]/g, "");

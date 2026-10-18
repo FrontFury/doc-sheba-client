@@ -1,11 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, X } from "lucide-react";
+import { AlertCircle, Eye, Loader2, Trash2, X } from "lucide-react";
+import {
+  deleteDoctorAppointment,
+  updateDoctorAppointmentStatus,
+} from "@/lib/actions/appointments";
+
+const appointmentStatuses = ["pending", "confirmed", "completed", "cancelled"];
 
 const formatAppointmentId = (appointment) => {
   const id = appointment?._id?.$oid || appointment?._id || appointment?.id;
-  return id ? String(id) : "—";
+  return typeof id === "string" ? id : "—";
 };
 
 const formatDate = (value) => {
@@ -122,14 +128,78 @@ function AppointmentDetails({ appointment, onClose }) {
 }
 
 export default function AppointmentList({ appointments, view }) {
+  const [appointmentRows, setAppointmentRows] = useState(appointments);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [busyAppointmentId, setBusyAppointmentId] = useState("");
+  const [mutationError, setMutationError] = useState("");
   const isDoctorView = view === "doctor";
 
   const columns = isDoctorView
     ? ["Appointment ID", "Patient Name", "Patient Email", "Patient Phone", "Chamber Fee", "Appointment Date", "Appointment Time", "Consultation Type", "Notes", "Status", "Actions"]
     : ["Appointment ID", "Doctor Name", "Department", "Chamber Fee", "Appointment Date", "Appointment Time", "Consultation Type", "Notes", "Status"];
 
-  if (appointments.length === 0) {
+  const handleStatusChange = async (appointment, status) => {
+    const appointmentId = formatAppointmentId(appointment);
+    if (appointmentId === "—" || !appointmentStatuses.includes(status)) {
+      setMutationError("This appointment cannot be updated because its ID or status is invalid.");
+      return;
+    }
+
+    setBusyAppointmentId(appointmentId);
+    setMutationError("");
+    try {
+      const result = await updateDoctorAppointmentStatus(appointmentId, status);
+      if (result?.error) {
+        setMutationError(result.error);
+        return;
+      }
+
+      setAppointmentRows((current) =>
+        current.map((item) =>
+          formatAppointmentId(item) === appointmentId
+            ? { ...item, status: result.status }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error("Unable to update appointment status:", error);
+      setMutationError("Unable to update appointment status. Please try again.");
+    } finally {
+      setBusyAppointmentId("");
+    }
+  };
+
+  const handleDelete = async (appointment) => {
+    const appointmentId = formatAppointmentId(appointment);
+    if (appointmentId === "—") {
+      setMutationError("This appointment cannot be deleted because its ID is invalid.");
+      return;
+    }
+    if (!window.confirm("Delete this appointment? This action cannot be undone.")) {
+      return;
+    }
+
+    setBusyAppointmentId(appointmentId);
+    setMutationError("");
+    try {
+      const result = await deleteDoctorAppointment(appointmentId);
+      if (result?.error) {
+        setMutationError(result.error);
+        return;
+      }
+
+      setAppointmentRows((current) =>
+        current.filter((item) => formatAppointmentId(item) !== appointmentId)
+      );
+    } catch (error) {
+      console.error("Unable to delete appointment:", error);
+      setMutationError("Unable to delete appointment. Please try again.");
+    } finally {
+      setBusyAppointmentId("");
+    }
+  };
+
+  if (appointmentRows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-14 text-center dark:border-slate-700 dark:bg-slate-900">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-[#0F766E] dark:bg-teal-950/60 dark:text-teal-300">
@@ -145,6 +215,15 @@ export default function AppointmentList({ appointments, view }) {
 
   return (
     <>
+      {mutationError && (
+        <div
+          role="alert"
+          className="mb-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
+        >
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {mutationError}
+        </div>
+      )}
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] border-collapse text-left">
@@ -158,7 +237,7 @@ export default function AppointmentList({ appointments, view }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {appointments.map((appointment, index) => (
+              {appointmentRows.map((appointment, index) => (
                 <tr key={formatAppointmentId(appointment) === "—" ? index : formatAppointmentId(appointment)} className="align-top transition hover:bg-teal-50/30 dark:hover:bg-slate-800/40">
                   <td className="max-w-40 truncate px-4 py-4 text-xs font-bold text-slate-500" title={formatAppointmentId(appointment)}>
                     {formatAppointmentId(appointment)}
@@ -183,18 +262,69 @@ export default function AppointmentList({ appointments, view }) {
                   <td className="max-w-56 px-4 py-4 text-sm text-slate-600 dark:text-slate-300">
                     <span className="line-clamp-2 break-words" title={displayValue(appointment.notes)}>{displayValue(appointment.notes)}</span>
                   </td>
-                  <td className="px-4 py-4"><StatusBadge status={appointment.status} /></td>
+                  <td className="px-4 py-4">
+                    {isDoctorView ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          aria-label={`Update appointment ${formatAppointmentId(appointment)} status`}
+                          value={
+                            appointmentStatuses.includes(
+                              String(appointment.status || "pending").toLowerCase()
+                            )
+                              ? String(appointment.status || "pending").toLowerCase()
+                              : "pending"
+                          }
+                          onChange={(event) =>
+                            handleStatusChange(appointment, event.target.value)
+                          }
+                          disabled={
+                            busyAppointmentId === formatAppointmentId(appointment)
+                          }
+                          className={`rounded-full border px-2.5 py-1.5 text-xs font-extrabold capitalize outline-none focus:ring-2 focus:ring-teal-600/20 disabled:opacity-50 ${getStatusStyle(appointment.status)}`}
+                        >
+                          {appointmentStatuses.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                        {busyAppointmentId === formatAppointmentId(appointment) && (
+                          <Loader2 className="h-4 w-4 animate-spin text-[#0F766E]" />
+                        )}
+                      </div>
+                    ) : (
+                      <StatusBadge status={appointment.status} />
+                    )}
+                  </td>
                   {isDoctorView && (
                     <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAppointment(appointment)}
-                        aria-label={`View appointment ${formatAppointmentId(appointment)}`}
-                        title="View appointment details"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-[#0F766E] transition hover:bg-[#0F766E] hover:text-white dark:border-teal-900 dark:bg-teal-950/60 dark:text-teal-300 dark:hover:bg-[#0F766E] dark:hover:text-white"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAppointment(appointment)}
+                          aria-label={`View appointment ${formatAppointmentId(appointment)}`}
+                          title="View appointment details"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-teal-100 bg-teal-50 text-[#0F766E] transition hover:bg-[#0F766E] hover:text-white dark:border-teal-900 dark:bg-teal-950/60 dark:text-teal-300 dark:hover:bg-[#0F766E] dark:hover:text-white"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(appointment)}
+                          disabled={
+                            busyAppointmentId === formatAppointmentId(appointment)
+                          }
+                          aria-label={`Delete appointment ${formatAppointmentId(appointment)}`}
+                          title="Delete appointment"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-700 dark:hover:text-white"
+                        >
+                          {busyAppointmentId === formatAppointmentId(appointment) ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   )}
                 </tr>
