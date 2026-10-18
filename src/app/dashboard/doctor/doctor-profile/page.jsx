@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import { getUserSession } from '@/lib/core/session';
-import DoctorProfile from './DoctorProfile';
 import { getDoctorDetails } from '@/lib/api/doctors';
 import { Loader2 } from 'lucide-react';
+import DoctorProfile from './DoctorProfile';
 
 // ১. ডাটা লোডার কম্পোনেন্ট
 async function DoctorProfileLoader() {

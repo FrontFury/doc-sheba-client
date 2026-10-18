@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
+import { useSession } from "@/lib/auth-client";
 import {
   Search,
   Bell,
@@ -21,16 +22,26 @@ import {
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isDoctor = session?.user?.role === "doctor";
 
   const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Doctor Profile", href: "/dashboard/doctor-profile", icon: UserSearch },
-    { name: "My Appointments", href: "/dashboard/patient/my-appointments", icon: CalendarCheck },
-    { name: "Doctor Appointments", href: "/dashboard/doctor/all-appointments", icon: CalendarCheck },
-    { name: "Medical Records", href: "/dashboard/records", icon: FileText },
-    { name: "Prescriptions", href: "/dashboard/prescriptions", icon: Pill },
-    { name: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 3 },
-    { name: "Profile", href: "/dashboard/profile", icon: User },
+    {
+      name: "Dashboard",
+      href: isDoctor ? "/dashboard/doctor" : "/dashboard/patient",
+      icon: LayoutDashboard,
+    },
+    ...(isDoctor
+      ? [
+          { name: "Doctor Profile", href: "/dashboard/doctor/doctor-profile", icon: UserSearch },
+          { name: "Doctor Appointments", href: "/dashboard/doctor/all-appointments", icon: CalendarCheck },
+        ]
+      : [
+          { name: "My Appointments", href: "/dashboard/patient/my-appointments", icon: CalendarCheck },
+          { name: "Medical Records", href: "/dashboard/records", icon: FileText },
+          { name: "Prescriptions", href: "/dashboard/prescriptions", icon: Pill },
+          { name: "Profile", href: "/dashboard/patient/profile", icon: User }
+        ]),
   ];
 
   return (
