@@ -1,5 +1,7 @@
 "use server";
 
+import { getUserToken } from "./session";
+
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
 const getApiUrl = (path) => {
@@ -8,6 +10,11 @@ const getApiUrl = (path) => {
   }
 
   return `${baseUrl.replace(/\/$/, "")}${path}`;
+};
+
+export const authHeader = async () => {
+  const token = await getUserToken();
+  return token ? { authorization: `Bearer ${token}` } : {};
 };
 
 const parseResponse = async (res) => {
@@ -34,21 +41,23 @@ const parseResponse = async (res) => {
 };
 
 export const serverFetch = async (path) => {
-  const res = await fetch(getApiUrl(path));
+  const res = await fetch(getApiUrl(path), {
+    headers: await authHeader(),
+  });
   return parseResponse(res);
 };
 
+export const protectedFetch = async (path) => serverFetch(path);
+
 const serverRequest = async (path, method, data) => {
+  const headers = await authHeader();
   const res = await fetch(getApiUrl(path), {
     method,
-    ...(data === undefined
-      ? {}
-      : {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }),
+    headers: {
+      ...headers,
+      ...(data === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    ...(data === undefined ? {} : { body: JSON.stringify(data) }),
   });
 
   return parseResponse(res);

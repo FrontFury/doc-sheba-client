@@ -1,4 +1,4 @@
-import { serverFetch } from "@/lib/core/server";
+import { protectedFetch } from "@/lib/core/server";
 
 const getAppointmentArray = (response) => {
   if (Array.isArray(response)) return response;
@@ -14,7 +14,7 @@ export const getPatientAppointments = async (patientID) => {
     throw new Error("A patient ID is required to load appointments.");
   }
 
-  const response = await serverFetch(
+  const response = await protectedFetch(
     `/api/patient/my-appointments?patientID=${encodeURIComponent(patientID)}`
   );
 
@@ -26,7 +26,7 @@ export const getDoctorAppointments = async (doctorID) => {
     throw new Error("A doctor ID is required to load appointments.");
   }
 
-  const response = await serverFetch(
+  const response = await protectedFetch(
     `/api/doctor/all-appointments?doctorID=${encodeURIComponent(doctorID)}`
   );
 

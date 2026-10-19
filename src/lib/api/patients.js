@@ -1,10 +1,10 @@
-import { serverFetch } from "../core/server";
+import { protectedFetch } from "../core/server";
 
 export const getPatientDetails = async (userID) => {
   if (!userID) return null;
 
   try {
-    const res = await serverFetch(
+    const res = await protectedFetch(
       `/api/my/patients?userID=${encodeURIComponent(userID)}`
     );
 

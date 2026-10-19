@@ -1,7 +1,7 @@
 "use server";
 
 import { getUserSession, requireRole } from "@/lib/core/session";
-import { serverDelete, serverFetch, serverPatch } from "@/lib/core/server";
+import { protectedFetch, serverDelete, serverPatch } from "@/lib/core/server";
 
 const allowedRoles = ["admin", "doctor", "patient"];
 
@@ -20,7 +20,7 @@ export async function getUsers() {
   const admin = await requireAdmin();
 
   try {
-    const users = await serverFetch("/user");
+    const users = await protectedFetch("/user");
     if (!Array.isArray(users)) {
       throw new Error("The backend returned an invalid users list.");
     }
