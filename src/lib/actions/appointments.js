@@ -1,6 +1,6 @@
 "use server";
 
-import { getDoctorDetails } from "@/lib/api/doctors";
+import { getDoctorDetails, getPublicDoctorDetails } from "@/lib/api/doctors";
 import { getPatientDetails } from "@/lib/api/patients";
 import { getDoctorAppointments } from "@/lib/api/appointments";
 import { getUserSession, requireRole } from "@/lib/core/session";
@@ -123,6 +123,9 @@ export async function createAppointment(formData) {
   if (!user) {
     return { error: "Please sign in before booking an appointment." };
   }
+  if (user.role !== "patient") {
+    return { error: "Only patient accounts can request appointments." };
+  }
 
   const doctorId = typeof formData?.doctorId === "string" ? formData.doctorId.trim() : "";
   const appointmentDate =
@@ -163,7 +166,7 @@ export async function createAppointment(formData) {
   try {
     const [patient, doctor] = await Promise.all([
       getPatientDetails(user.id),
-      getDoctorDetails(doctorId),
+      getPublicDoctorDetails(doctorId),
     ]);
 
     const patientName = user.name || patient?.name || "";

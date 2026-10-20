@@ -3,12 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { Button } from "@heroui/react";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  Calendar,
-  Sun,
-  Moon,
   Menu,
   X,
   User as UserIcon,
@@ -17,14 +13,15 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
   const dropdownRef = useRef(null);
@@ -49,17 +46,12 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => !prev);
-    document.documentElement.classList.toggle("dark");
-  };
-
   const handleSignOut = async () => {
     setIsDropdownOpen(false);
     await signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = "/auth/signin";
+          router.push("/auth/signin");
         },
       },
     });
@@ -71,6 +63,8 @@ export default function Navbar() {
     { name: "Departments", href: "/departments" },
     { name: "About Us", href: "/about" },
   ];
+
+  if (pathname.startsWith("/dashboard")) return null;
 
   return (
     <header
@@ -133,31 +127,8 @@ export default function Navbar() {
 
         {/* Right: Actions, Theme Toggle & User Menu */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Appointment Button */}
-          <Button
-            as={Link}
-            href="/book-appointment"
-            startContent={<Calendar className="w-4 h-4" />}
-            className="bg-[#0F766E] hover:bg-[#0E7490] text-white font-medium text-sm px-4 sm:px-6 py-2.5 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
-          >
-            <span className="hidden sm:inline">Book Appointment</span>
-            <span className="sm:hidden">Book</span>
-          </Button>
-
           {/* Dark / Light Mode Toggle */}
-          <Button
-            isIconOnly
-            variant="flat"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="bg-slate-100 dark:bg-slate-800 text-[#12343B] dark:text-amber-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-          >
-            {isDarkMode ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5 text-[#12343B]" />
-            )}
-          </Button>
+          <ThemeToggle />
 
           {/* User Profile Dropdown or Login Button */}
           {user ? (

@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { getUserToken } from "./session";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -60,6 +61,12 @@ const serverRequest = async (path, method, data) => {
     ...(data === undefined ? {} : { body: JSON.stringify(data) }),
   });
 
+  if (res.status === 401) {
+    redirect("/auth/signin"); 
+  } else if (res.status === 403) {
+    redirect("/unauthorized");
+  }
+
   return parseResponse(res);
 };
 
@@ -70,3 +77,4 @@ export const serverPatch = async (path, data) =>
   serverRequest(path, "PATCH", data);
 
 export const serverDelete = async (path) => serverRequest(path, "DELETE");
+

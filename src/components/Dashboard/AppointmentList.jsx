@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Eye, Loader2, Trash2, X } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarDays,
+  Clock3,
+  CreditCard,
+  Eye,
+  Hash,
+  Loader2,
+  MapPin,
+  Stethoscope,
+  Trash2,
+  X,
+} from "lucide-react";
 import {
   deleteDoctorAppointment,
   updateDoctorAppointmentStatus,
@@ -210,6 +222,109 @@ export default function AppointmentList({ appointments, view }) {
           {isDoctorView ? "Appointments assigned to you will appear here." : "Your appointment bookings will appear here."}
         </p>
       </div>
+    );
+  }
+
+  if (!isDoctorView) {
+    return (
+      <>
+        {mutationError && (
+          <div
+            role="alert"
+            className="mb-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {mutationError}
+          </div>
+        )}
+        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+          {appointmentRows.map((appointment, index) => {
+            const appointmentId = formatAppointmentId(appointment);
+            const doctorName = displayValue(appointment.doctorName);
+            const consultationType = displayValue(appointment.consultationType);
+
+            return (
+              <article
+                key={appointmentId === "—" ? index : appointmentId}
+                className="group relative isolate overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-950/10 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-800"
+              >
+                <div className="absolute inset-x-0 top-0 -z-10 h-28 bg-gradient-to-br from-[#0F766E] via-teal-600 to-emerald-500 opacity-[0.08] transition-opacity group-hover:opacity-[0.13] dark:opacity-15" />
+                <div className="p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-teal-100 bg-teal-50 text-[#0F766E] dark:border-teal-900 dark:bg-teal-950/70 dark:text-teal-300">
+                        <Stethoscope className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 pt-0.5">
+                        <h2 className="truncate text-base font-black text-[#12343B] dark:text-white sm:text-lg">
+                          {doctorName}
+                        </h2>
+                        <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-[#0F766E] dark:text-teal-400" />
+                          <span className="truncate">{displayValue(appointment.department)}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <StatusBadge status={appointment.status} />
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-950/50">
+                      <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                        <CalendarDays className="h-3.5 w-3.5 text-[#0F766E] dark:text-teal-400" />
+                        Date
+                      </div>
+                      <p className="mt-2 break-words text-sm font-extrabold !text-slate-900 dark:!text-slate-100">
+                        {formatDate(appointment.appointmentDate)}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-950/50">
+                      <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                        <Clock3 className="h-3.5 w-3.5 text-[#0F766E] dark:text-teal-400" />
+                        Time
+                      </div>
+                      <p className="mt-2 break-words text-sm font-extrabold !text-slate-900 dark:!text-slate-100">
+                        {displayValue(appointment.appointmentTime)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <div>
+                      <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                        <CreditCard className="h-3.5 w-3.5 text-[#0F766E] dark:text-teal-400" />
+                        Chamber fee
+                      </p>
+                      <p className="mt-1 text-base font-black text-[#0F766E] dark:text-teal-300">
+                        {formatFee(appointment.chamberFee)}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-xs font-bold capitalize text-[#0F766E] dark:border-teal-900 dark:bg-teal-950/60 dark:text-teal-300">
+                      {consultationType}
+                    </span>
+                  </div>
+
+                  {appointment.notes && (
+                    <div className="mt-4 rounded-2xl border border-slate-100 bg-white/80 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                        Reason / symptoms
+                      </p>
+                      <p className="mt-1 line-clamp-2 break-words text-sm leading-5 text-slate-600 dark:text-slate-300">
+                        {appointment.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="mt-4 flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                    <Hash className="h-3 w-3" />
+                    Appointment {appointmentId}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </>
     );
   }
 

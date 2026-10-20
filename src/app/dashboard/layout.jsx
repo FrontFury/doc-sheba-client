@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { useSession } from "@/lib/auth-client";
+import { getCurrentPatientSummary } from "@/lib/actions/patients";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   Search,
   Bell,
@@ -19,13 +21,53 @@ import {
   Users,
   LogOut,
   Headphones,
+  Home,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const user = session?.user;
+  const [patient, setPatient] = useState(null);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const isDoctor = session?.user?.role === "doctor";
   const isAdmin = session?.user?.role === "admin";
+
+  useEffect(() => {
+    if (user?.role !== "patient") return;
+
+    let isCurrent = true;
+    getCurrentPatientSummary()
+      .then((profile) => {
+        if (isCurrent) setPatient(profile);
+      })
+      .catch((error) => {
+        console.error("Failed to load dashboard patient profile:", error);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user?.id, user?.role]);
+
+  const profileName =
+    patient?.name || user?.name || (isDoctor ? "Doctor" : isAdmin ? "Admin" : "Patient");
+  const profileImage =
+    typeof patient?.image === "string" && patient.image
+      ? patient.image
+      : typeof user?.image === "string"
+        ? user.image
+        : "";
+  const profileSubtitle =
+    user?.role === "patient"
+      ? patient?.patientID || "Patient profile not set up"
+      : isDoctor
+        ? "Doctor account"
+        : isAdmin
+          ? "Administrator"
+          : "";
 
   const navItems = [
     {
@@ -58,8 +100,18 @@ export default function DashboardLayout({ children }) {
       {/* TOP NAVBAR */}
       <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
         
-        {/* Brand Logo */}
+        {/* Mobile Menu and Brand Logo */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen((isOpen) => !isOpen)}
+            aria-label={isMobileNavOpen ? "Close dashboard menu" : "Open dashboard menu"}
+            aria-expanded={isMobileNavOpen}
+            aria-controls="dashboard-mobile-navigation"
+            className="rounded-xl p-2 text-[#12343B] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E] dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
+          >
+            {isMobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-[#0F766E] flex items-center justify-center text-white font-bold text-lg shadow-sm">
               <Image
@@ -89,10 +141,20 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Right Action Widgets */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link
+            href="/"
+            aria-label="Home"
+            className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-2.5 py-2 text-xs font-bold text-[#0F766E] transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-300 dark:hover:bg-teal-950 sm:px-3"
+          >
+            <Home className="h-4 w-4" />
+            <span className="hidden sm:inline">Home</span>
+          </Link>
+
+          <ThemeToggle />
           
           {/* Notification Button */}
-          <button className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <button className="relative hidden rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 sm:block">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
           </button>
@@ -107,19 +169,50 @@ export default function DashboardLayout({ children }) {
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
             <div className="relative w-8 h-8 rounded-full overflow-hidden border border-teal-500/30">
               <Image
-                src="/images/HeroBanner.jpg"
-                alt="Tasin Ahmed"
+                src={profileImage || "/images/HeroBanner.jpg"}
+                alt={profileName}
                 fill
                 className="object-cover"
+                unoptimized={Boolean(profileImage)}
               />
             </div>
             <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200">
-              Tasin A.
+              {profileName}
             </span>
           </div>
 
         </div>
       </header>
+
+      {isMobileNavOpen && (
+        <nav
+          id="dashboard-mobile-navigation"
+          aria-label="Dashboard navigation"
+          className="space-y-1 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 lg:hidden"
+        >
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setIsMobileNavOpen(false)}
+                aria-current={isActive ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold transition-colors ${
+                  isActive
+                    ? "bg-[#E8F7F4] text-[#0F766E] dark:bg-teal-950/80 dark:text-teal-300"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       {/* MAIN CONTAINER: SIDEBAR + CONTENT */}
       <div className="flex flex-1 overflow-hidden">
@@ -133,22 +226,25 @@ export default function DashboardLayout({ children }) {
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 flex items-center gap-3">
               <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-teal-500/30 shrink-0">
                 <Image
-                  src="/images/HeroBanner.jpg"
-                  alt="Tasin Ahmed"
+                  src={profileImage || "/images/HeroBanner.jpg"}
+                  alt={profileName}
                   fill
                   className="object-cover"
+                  unoptimized={Boolean(profileImage)}
                 />
               </div>
               <div className="overflow-hidden">
                 <h4 className="font-extrabold text-xs text-[#12343B] dark:text-slate-100 truncate">
-                  Tasin Ahmed
+                  {profileName}
                 </h4>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                  PAT-2026-00125
+                  {profileSubtitle}
                 </p>
-                <span className="inline-block mt-1 text-[9px] font-extrabold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-950/80 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
-                  Blood: B+
-                </span>
+                {user?.role === "patient" && (
+                  <span className="inline-block mt-1 text-[9px] font-extrabold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-950/80 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
+                    Blood: {patient?.bloodGroup || "Not set"}
+                  </span>
+                )}
               </div>
             </div>
 

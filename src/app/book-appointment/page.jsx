@@ -9,7 +9,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getDoctorDetails } from "@/lib/api/doctors";
+import { getPublicDoctorDetails } from "@/lib/api/doctors";
 import { getPatientDetails } from "@/lib/api/patients";
 import { getUserSession } from "@/lib/core/session";
 import BookingForm from "./BookingForm";
@@ -39,6 +39,21 @@ async function BookingContent({ doctorId }) {
     redirect(`/auth/signin?callbackUrl=${encodeURIComponent(bookingUrl)}`);
   }
 
+  if (user.role !== "patient") {
+    return (
+      <BookingMessage
+        title="Patient account required"
+        message={
+          user.role === "doctor"
+            ? "You can't apply for an appointment because you are signed in with a doctor account. Appointment requests are available to patients only."
+            : "Only patient accounts can apply for an appointment."
+        }
+        actionHref="/doctors"
+        actionLabel="Return to doctor profiles"
+      />
+    );
+  }
+
   if (!doctorId) {
     return (
       <BookingMessage
@@ -55,7 +70,7 @@ async function BookingContent({ doctorId }) {
 
   try {
     [doctor, patient] = await Promise.all([
-      getDoctorDetails(doctorId),
+      getPublicDoctorDetails(doctorId),
       getPatientDetails(user.id),
     ]);
   } catch (error) {

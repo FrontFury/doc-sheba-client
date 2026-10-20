@@ -123,6 +123,7 @@ export default function FindDoctors() {
     try {
       const bookingUrl = `/book-appointment?doctor=${encodeURIComponent(requestedDoctorId)}`;
       const isAuthenticated = await hasActivePatientSession();
+      setBookingDoctorId('');
 
       if (isAuthenticated) {
         router.push(bookingUrl);

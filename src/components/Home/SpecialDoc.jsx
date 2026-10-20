@@ -60,6 +60,7 @@ export default function SpecialDoc() {
     try {
       const bookingUrl = `/book-appointment?doctor=${encodeURIComponent(requestedDoctorId)}`;
       const isAuthenticated = await hasActivePatientSession();
+      setBookingDoctorId("");
 
       router.push(
         isAuthenticated

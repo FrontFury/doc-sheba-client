@@ -180,7 +180,7 @@ export default function DoctorDashboard() {
         >
           <div>
             <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Today's Patients
+              Today&apos;s Patients
             </p>
             <h3 className="text-2xl font-black text-[#12343B] dark:text-slate-100 mt-1">
               18 Patients
@@ -327,7 +327,7 @@ export default function DoctorDashboard() {
                 className="w-full sm:w-auto flex-1 bg-[#0F766E] hover:bg-[#0E7490] text-white font-extrabold text-xs py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2"
               >
                 <UserCheck className="w-4 h-4" />
-                <span>Call Next Patient ({TODAY_PATIENTS[currentQueueIndex + 1]?.serial || 'End'})</span>
+                <span>Call Next Patient ({TODAY_PATIENTS[currentQueueIndex + 1]?.serial || "End"})</span>
               </Button>
 
               <Button
@@ -347,7 +347,7 @@ export default function DoctorDashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-extrabold text-[#12343B] dark:text-slate-100 tracking-tight flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#0F766E] dark:text-teal-400" />
-              <span>Today's OPD Queue</span>
+              <span>Today&apos;s OPD Queue</span>
             </h2>
             <span className="text-xs font-bold text-slate-400">
               Total {TODAY_PATIENTS.length} Serials
@@ -362,8 +362,8 @@ export default function DoctorDashboard() {
                   key={pt.serial}
                   className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
                     isCurrent
-                      ? 'bg-teal-50/80 dark:bg-teal-950/60 border-[#0F766E] shadow-sm'
-                      : 'bg-slate-50/50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800'
+                      ? "bg-teal-50/80 dark:bg-teal-950/60 border-[#0F766E] shadow-sm"
+                      : "bg-slate-50/50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">

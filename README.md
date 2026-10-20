@@ -147,6 +147,14 @@ Use your actual MongoDB connection string and credentials. URL-encode special ch
 
 **Never commit `.env` or database credentials to Git.**
 
+### Vercel authentication origins
+
+Set `BETTER_AUTH_URL` in Vercel to the full public app origin, such as
+`https://your-domain.example` (without a path). If you set
+`NEXT_PUBLIC_BETTER_AUTH_URL`, use the same origin. The auth configuration
+also trusts Vercel's deployment and production hostnames, so preview deployments
+can authenticate without manually adding each generated deployment URL.
+
 ## Run the Server
 
 Example `package.json` scripts:

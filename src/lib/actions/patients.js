@@ -2,6 +2,22 @@
 
 import { getUserSession } from "../core/session";
 import { serverFetch, serverMutation } from "../core/server";
+import { getPatientDetails } from "../api/patients";
+
+export async function getCurrentPatientSummary() {
+  const user = await getUserSession();
+  if (!user || user.role !== "patient") return null;
+
+  const patient = await getPatientDetails(user.id);
+  if (!patient) return null;
+
+  return {
+    patientID: patient.patientID || "",
+    name: patient.name || "",
+    image: patient.image || "",
+    bloodGroup: patient.bloodGroup || "",
+  };
+}
 
 export const createPatient = async (newPatientData) => {
   const user = await getUserSession();
