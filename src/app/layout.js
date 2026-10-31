@@ -41,12 +41,39 @@ export const metadata = {
   },
 };
 
+const themeScript = `
+  (() => {
+    const storageKey = "docsheba-theme";
+    let storedTheme = null;
+    try {
+      storedTheme = window.localStorage.getItem(storageKey);
+    } catch {
+    }
+    if (storedTheme !== "dark" && storedTheme !== "light") {
+      const cookieTheme = document.cookie
+        .split("; ")
+        .find((cookie) => cookie.startsWith(storageKey + "="));
+      storedTheme = cookieTheme ? cookieTheme.split("=")[1] : null;
+    }
+    const theme =
+      storedTheme === "dark" || storedTheme === "light"
+        ? storedTheme
+        : window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.dataset.theme = theme;
+  })();
+`;
+
 export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} h-full antialiased`}
     >
+      <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       <body className="min-h-full flex flex-col">
         <Navbar></Navbar>
         <main>{children}</main>

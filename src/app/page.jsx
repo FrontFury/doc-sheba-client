@@ -7,7 +7,7 @@ import SpecialDoc from "@/components/Home/SpecialDoc";
 
 export default function Home() {
   return (
-    <main className="w-full min-h-screen bg-[#F8FAFC] transition-colors">
+    <main className="w-full min-h-screen bg-[#F8FAFC] text-[#172033] transition-colors dark:bg-slate-950 dark:text-slate-100">
       <HeroBanner />
       <SymptomSelector/>
       <ShortDes/>

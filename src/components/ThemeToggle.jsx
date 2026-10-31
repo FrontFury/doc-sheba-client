@@ -4,12 +4,27 @@ import { useSyncExternalStore } from "react";
 import { Button } from "@heroui/react";
 import { Moon, Sun } from "lucide-react";
 
+const THEME_STORAGE_KEY = "docsheba-theme";
+
 const subscribeToTheme = (callback) => {
   window.addEventListener("docsheba-theme-change", callback);
-  return () => window.removeEventListener("docsheba-theme-change", callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener("docsheba-theme-change", callback);
+    window.removeEventListener("storage", callback);
+  };
 };
 
 const getThemeSnapshot = () => document.documentElement.classList.contains("dark");
+
+const saveTheme = (theme) => {
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Some private browsing modes block localStorage, so use a session cookie.
+  }
+  document.cookie = `${THEME_STORAGE_KEY}=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+};
 
 export default function ThemeToggle() {
   const isDarkMode = useSyncExternalStore(
@@ -20,7 +35,10 @@ export default function ThemeToggle() {
 
   const toggleTheme = () => {
     const nextIsDarkMode = !document.documentElement.classList.contains("dark");
+    const nextTheme = nextIsDarkMode ? "dark" : "light";
     document.documentElement.classList.toggle("dark", nextIsDarkMode);
+    document.documentElement.dataset.theme = nextTheme;
+    saveTheme(nextTheme);
     window.dispatchEvent(new Event("docsheba-theme-change"));
   };
 
