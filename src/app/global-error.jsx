@@ -1,6 +1,7 @@
 "use client";
 
 import ErrorPage from "@/components/ErrorPage";
+import Script from "next/script";
 import "./globals.css";
 
 const themeScript = `
@@ -30,8 +31,10 @@ const themeScript = `
 export default function GlobalError({ error, retry }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full antialiased">
-      <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       <body className="min-h-full">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
         <ErrorPage error={error} retry={retry} />
       </body>
     </html>
