@@ -1,7 +1,14 @@
 import { Suspense } from "react";
 import { requireRole } from "@/lib/core/session";
+import { createPageMetadata } from "@/app/metadata";
 
 export const instant = false;
+export const metadata = createPageMetadata({
+    title: "Doctor Dashboard",
+    description:
+        "View appointments, manage your doctor profile, and coordinate patient care in DocSheba.",
+    keywords: ["doctor dashboard", "doctor appointments", "patient care"],
+});
 
 async function DoctorAccess({ children }) {
     await requireRole('doctor');

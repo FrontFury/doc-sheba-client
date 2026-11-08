@@ -1,7 +1,14 @@
 import { Suspense } from "react";
 import { requireRole } from "@/lib/core/session";
+import { createPageMetadata } from "@/app/metadata";
 
 export const instant = false;
+export const metadata = createPageMetadata({
+    title: "Admin Dashboard",
+    description:
+        "Manage DocSheba users and oversee healthcare platform operations from the administrator dashboard.",
+    keywords: ["admin dashboard", "user management", "DocSheba administration"],
+});
 
 async function AdminAccess({ children }) {
     await requireRole('admin');
